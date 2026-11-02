@@ -1,0 +1,390 @@
+---
+/**
+ * Home hero, a quiet title sequence. A hairline draws across, the name rises letter by letter in a
+ * staggered three-line composition over a hairline that draws beneath it, then the greeting,
+ * statement and scroll cue settle in. All of
+ * that is CSS, so the name paints immediately and never waits for scripts.
+ *
+ * Interaction (src/motion/hero.ts): once the intro ends the letter masks open (data-settled), letters lift as the cursor passes, a soft coral glow follows it,
+ * the greeting matches the time of day in Kozhikode, and scrolling away drifts the lines apart.
+ * The statement's last words roll through who Kiran builds software for.
+ */
+import Logo from '~/components/Logo.astro';
+
+interface Props {
+  name: string;
+  roleLine: string;
+  aka?: string;
+}
+const { name, roleLine, aka } = Astro.props;
+const lines = name.split(' ');
+/** Who the companies build for, from the verified facts (Txtudio's four products, Lofritex's clients). */
+const audiences = ['growing businesses', 'event organisers', 'interior design studios', 'Indian banks', 'clients abroad'];
+let ci = 0;
+---
+
+<section class="hero" aria-labelledby="hero-name" data-hero>
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__grain" aria-hidden="true"></div>
+  <p class="label hero__greeting">
+    <span data-hero-greeting>Hello</span> from Kozhikode, Kerala
+  </p>
+
+  <h1 id="hero-name" class="hero__name display" data-cursor="Hello">
+    <span class="visually-hidden">{name}</span>
+    {
+      lines.map((line, li) => (
+        <span class={`hero__line hero__line--${li}`} aria-hidden="true" data-hero-line={li}>
+          {[...line].map((ch) => (
+            <span class="hero__mask">
+              <span class="hero__ch" style={`--ci:${ci++};--li:${li}`}>
+                <span class="hero__lift">{ch}</span>
+              </span>
+            </span>
+          ))}
+        </span>
+      ))
+    }
+    <span class="hero__rule" aria-hidden="true"></span>
+  </h1>
+
+  <div class="hero__foot">
+    <p class="hero__statement">
+      <span class="visually-hidden">{roleLine}</span>
+      <span aria-hidden="true">
+        Founder of <span class="hero__co"><Logo company="txtudio" variant="mark" brand />Txtudio</span> and{' '}
+        <span class="hero__co"><Logo company="lofritex" variant="mark" brand />Lofritex</span>. I build software for{' '}
+        <span class="hero__roller">
+          <span class="hero__roll" style={`--n:${audiences.length}`}>
+            {[...audiences, audiences[0]].map((a) => (
+              <span>{a}</span>
+            ))}
+          </span>
+        </span>
+      </span>
+    </p>
+    {aka && <p class="label hero__aka">{aka}</p>}
+    <a href="#companies-title" class="hero__scroll" data-scramble>
+      <span class="label">Scroll to begin</span>
+      <span class="hero__cue" aria-hidden="true"><span></span></span>
+    </a>
+  </div>
+</section>
+
+<style>
+  .hero {
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    align-content: center;
+    padding: calc(var(--bar) + var(--space-8)) var(--gutter) var(--space-10);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* ---------- Atmosphere ---------- */
+  .hero__glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(42rem circle at var(--mx) var(--my), rgb(242 69 63 / 0.1), transparent 60%);
+    opacity: 0;
+    transition: opacity 1.2s;
+  }
+
+  .hero[data-pointer] .hero__glow {
+    opacity: 1;
+  }
+
+  /* Film grain, barely there. */
+  .hero__grain {
+    position: absolute;
+    inset: -50%;
+    z-index: -1;
+    opacity: 0.06;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  :global(html.js-motion) .hero__grain {
+    animation: grain 0.9s steps(4) infinite;
+  }
+
+  @keyframes grain {
+    0% {
+      transform: translate(0, 0);
+    }
+    25% {
+      transform: translate(-3%, 2%);
+    }
+    50% {
+      transform: translate(2%, -3%);
+    }
+    75% {
+      transform: translate(-2%, -1%);
+    }
+  }
+
+  /* A hairline that draws across under the name as the letters rise. */
+  .hero__rule {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.22em;
+    height: 1px;
+    background: var(--coral);
+    opacity: 0.55;
+    transform-origin: left;
+  }
+
+  :global(html.js-motion) .hero__rule {
+    animation: rule-draw 1.6s var(--ease-out) 0.2s both;
+  }
+
+  @keyframes rule-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  /* ---------- The name ---------- */
+  .hero__greeting {
+    position: relative;
+    margin: 0 0 var(--space-5) 26%;
+  }
+
+  .hero__name {
+    position: relative;
+    display: grid;
+    font-size: clamp(3rem, 9.4vw, 11.5rem);
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    cursor: default;
+  }
+
+  .hero__line {
+    display: block;
+    white-space: nowrap;
+    will-change: transform;
+  }
+
+  /* Staggered composition: first name set in, surname wide, last name offset. */
+  .hero__line--0 {
+    padding-left: 26%;
+  }
+
+  .hero__line--1 {
+    text-align: right;
+  }
+
+  .hero__line--2 {
+    padding-left: 12%;
+  }
+
+  .hero__mask {
+    display: inline-block;
+    overflow: clip;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+    vertical-align: top;
+  }
+
+  .hero__ch {
+    display: inline-block;
+  }
+
+  /* After the intro the masks open, so letters lifted by the cursor are never clipped. */
+  .hero[data-settled] .hero__mask {
+    overflow: visible;
+  }
+
+  .hero__lift {
+    display: inline-block;
+    transition: color 0.4s;
+  }
+
+  :global(html.js-motion) .hero__ch {
+    animation: ch-rise 1.3s var(--ease-out) both;
+    animation-delay: calc(0.45s + var(--li) * 0.12s + var(--ci) * 0.028s);
+  }
+
+  @keyframes ch-rise {
+    from {
+      transform: translateY(105%) rotate(7deg);
+    }
+  }
+
+  /* ---------- Foot: statement, alias, scroll cue ---------- */
+  .hero__foot {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: var(--space-6);
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto;
+    gap: var(--space-5);
+    align-items: end;
+  }
+
+  :global(html.js-motion) .hero__greeting,
+  :global(html.js-motion) .hero__foot > * {
+    animation: settle 1.1s var(--ease-out) both;
+    animation-delay: 1.5s;
+  }
+
+  :global(html.js-motion) .hero__foot > :nth-child(2) {
+    animation-delay: 1.65s;
+  }
+
+  :global(html.js-motion) .hero__foot > :nth-child(3) {
+    animation-delay: 1.8s;
+  }
+
+  @keyframes settle {
+    from {
+      opacity: 0;
+      transform: translateY(0.8rem);
+    }
+  }
+
+  .hero__statement {
+    max-width: 34rem;
+    font-size: var(--step-1);
+    line-height: 1.35;
+  }
+
+  .hero__co {
+    white-space: nowrap;
+  }
+
+  .hero__co :global(.logo) {
+    margin: -0.15em 0.25em 0 0.1em;
+    font-size: 0.95em;
+  }
+
+  .hero__roller {
+    display: inline-block;
+    height: 1.35em;
+    overflow: clip;
+    vertical-align: bottom;
+    color: var(--coral-ink);
+    font-weight: 500;
+  }
+
+  .hero__roll {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero__roll span {
+    display: block;
+    height: 1.35em;
+    white-space: nowrap;
+  }
+
+  :global(html.js-motion) .hero__roll {
+    animation: roll calc(var(--n) * 2.6s) cubic-bezier(0.7, 0, 0.2, 1) infinite;
+    animation-delay: 2.4s;
+  }
+
+  /* Five audiences plus a copy of the first, so the loop restarts seamlessly. */
+  @keyframes roll {
+    0%,
+    16% {
+      transform: translateY(0);
+    }
+    20%,
+    36% {
+      transform: translateY(calc(-1 * 1.35em));
+    }
+    40%,
+    56% {
+      transform: translateY(calc(-2 * 1.35em));
+    }
+    60%,
+    76% {
+      transform: translateY(calc(-3 * 1.35em));
+    }
+    80%,
+    96% {
+      transform: translateY(calc(-4 * 1.35em));
+    }
+    100% {
+      transform: translateY(calc(-5 * 1.35em));
+    }
+  }
+
+  .hero__scroll {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    text-decoration: none;
+    color: var(--fg);
+  }
+
+  .hero__cue {
+    position: relative;
+    width: 1px;
+    height: 3.5rem;
+    background: var(--rule);
+    overflow: hidden;
+  }
+
+  .hero__cue span {
+    position: absolute;
+    left: 0;
+    width: 1px;
+    height: 40%;
+    background: var(--fg);
+  }
+
+  :global(html.js-motion) .hero__cue span {
+    animation: cue 1.8s var(--ease-out) infinite;
+  }
+
+  @keyframes cue {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(260%);
+    }
+  }
+
+  @media (max-width: 56rem) {
+    .hero {
+      padding-top: calc(var(--bar) + var(--space-6));
+      padding-bottom: 12rem;
+    }
+
+    /* Sized so the longest line (KRISHNAKUMAR) fits the phone width. */
+    .hero__name {
+      font-size: 9.8vw;
+    }
+
+    .hero__greeting,
+    .hero__line--0 {
+      margin-left: 0;
+      padding-left: 0;
+    }
+
+    .hero__line--1 {
+      text-align: left;
+    }
+
+    .hero__line--2 {
+      padding-left: 0;
+    }
+
+    .hero__foot {
+      grid-template-columns: 1fr;
+    }
+
+    .hero__scroll {
+      display: none;
+    }
+  }
+</style>

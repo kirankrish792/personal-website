@@ -1,0 +1,261 @@
+---
+import { getEntry, render, type CollectionEntry } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import AuthorBox from '~/components/AuthorBox.astro';
+import ArticleAside from '~/components/ArticleAside.astro';
+import person from '~/data/person.json';
+import { formatDate, posts, readingMinutes } from '~/lib/content';
+import { articleNode, breadcrumbNode } from '~/lib/schema';
+import { SITE } from '~/site.config';
+
+export async function getStaticPaths() {
+  // posts() is newest first. Previous and next are chronological, as readers expect on a blog:
+  // the previous post is the older one (below in the list), the next post the newer one (above).
+  const all = await posts();
+  return all.map((post, i) => ({
+    params: { slug: post.id },
+    props: { post, prev: all[i + 1] ?? null, next: all[i - 1] ?? null },
+  }));
+}
+
+interface Props {
+  post: CollectionEntry<'writing'>;
+  /** The post published before this one. */
+  prev: CollectionEntry<'writing'> | null;
+  /** The post published after this one. */
+  next: CollectionEntry<'writing'> | null;
+}
+
+interface MoreLink {
+  label: string;
+  title: string;
+  href: string;
+  rel?: 'prev' | 'next';
+}
+
+const { post, prev, next } = Astro.props;
+const d = post.data;
+const path = `/writing/${post.id}`;
+const { Content, headings } = await render(post);
+const minutes = readingMinutes(post.body);
+const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+const updated = d.updatedDate && d.updatedDate.valueOf() !== d.pubDate.valueOf() ? d.updatedDate : undefined;
+const related = d.relatedWork ? await getEntry('work', d.relatedWork) : undefined;
+
+const more: MoreLink[] = [];
+if (related) more.push({ label: 'Related case study', title: related.data.title, href: `/work/${related.id}` });
+if (prev) more.push({ label: 'Previous post', title: prev.data.title, href: `/writing/${prev.id}`, rel: 'prev' });
+if (next) more.push({ label: 'Next post', title: next.data.title, href: `/writing/${next.id}`, rel: 'next' });
+
+const schema = [
+  articleNode({
+    path,
+    headline: d.title,
+    description: d.description,
+    published: d.pubDate,
+    modified: d.updatedDate,
+    type: 'BlogPosting',
+  }),
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'Writing', path: '/writing' },
+    { name: d.title, path },
+  ]),
+];
+---
+
+<Base
+  title={`${d.title} – ${SITE.shortName}`}
+  description={d.description}
+  type="article"
+  published={d.pubDate}
+  modified={d.updatedDate ?? d.pubDate}
+  schema={schema}
+  page="post"
+>
+  <article class="post" aria-labelledby="post-title">
+    <PageHead id="post-title" h1={d.title} lede={d.summary}>
+      <p class="byline">
+        <span>By <a href="/about" rel="author">{person.name}</a></span>
+        <time datetime={isoDate(d.pubDate)}>{formatDate(d.pubDate)}</time>
+        <span>{minutes} min read</span>
+        {
+          updated && (
+            <span>
+              Updated <time datetime={isoDate(updated)}>{formatDate(updated)}</time>
+            </span>
+          )
+        }
+      </p>
+    </PageHead>
+
+    <div class="container post__body article-grid">
+      <div class="post__column" id="post-body">
+        <div class="prose">
+          <Content />
+        </div>
+        <footer class="post__footer">
+          <AuthorBox />
+        </footer>
+      </div>
+      <ArticleAside headings={headings} target="#post-body">
+        <div class="aside-card">
+          <p class="label">Written by</p>
+          <p class="aside-card__value">
+            <a href="/about" class="link-draw">{person.name}</a>
+          </p>
+          <p class="aside-card__note">
+            {formatDate(d.pubDate)}, {minutes} min read
+          </p>
+          <button type="button" class="btn aside-card__copy" data-copy-url>
+            <span data-copy-label>Copy link</span>
+          </button>
+        </div>
+        {more.map((m) => (
+          <a class="aside-next" href={m.href} rel={m.rel}>
+            <span class="label">{m.label}</span>
+            <span class="aside-next__name">{m.title}</span>
+          </a>
+        ))}
+      </ArticleAside>
+    </div>
+  </article>
+
+  <nav class="container post-more" aria-label="More to read">
+    <div class="post__column">
+      {
+        more.length > 0 && (
+          <ul class="post-more__rows" role="list">
+            {more.map((m) => (
+              <li>
+                <a class="post-more__link" href={m.href} rel={m.rel}>
+                  <span class="post-more__label">{m.label}</span>{' '}
+                  <span class="post-more__title">{m.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <a class="post-more__all" href="/writing">All writing</a>
+    </div>
+  </nav>
+</Base>
+
+<style>
+  /* Post titles run long, so they get a gentler scale than one-word index titles. */
+  .post :global(.page-head h1) {
+    font-size: clamp(var(--step-3), 3vw + 1rem, var(--step-5));
+    max-width: 24ch;
+  }
+
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--space-6);
+    row-gap: var(--space-1);
+    max-width: 44rem;
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--rule);
+    color: var(--fg-soft);
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* A 44 px tall target without changing the line height. */
+  .byline a {
+    display: inline-block;
+    padding-block: 0.625rem;
+    margin-block: -0.625rem;
+    color: var(--fg);
+  }
+
+  .post__body {
+    padding-top: var(--space-5);
+  }
+
+  .post__column {
+    max-width: var(--measure);
+  }
+
+  .post__footer {
+    margin-top: var(--space-8);
+    padding-block: var(--space-6);
+    border-top: 1px solid var(--rule);
+  }
+
+  .post-more {
+    padding-bottom: var(--space-9);
+  }
+
+  .post-more__rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .post-more__rows li {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .post-more__link {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    column-gap: var(--space-5);
+    align-items: baseline;
+    padding-block: var(--space-4);
+    text-decoration: none;
+  }
+
+  .post-more__label {
+    color: var(--fg-faint);
+    font-stretch: var(--wdth-ledger);
+  }
+
+  .post-more__title {
+    font-size: var(--step-1);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .post-more__link:hover .post-more__title,
+  .post-more__link:focus-visible .post-more__title {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.2em;
+  }
+
+  .post-more__all {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-top: var(--space-5);
+  }
+
+  @media (max-width: 56rem) {
+    .post-more__link {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--space-1);
+    }
+  }
+
+  /* Wide tables (the Txtudio post has five columns) share the width evenly and wrap inside
+     their cells on phones, so nothing runs past the screen edge. */
+  @media (max-width: 40rem) {
+    .post__column :global(.prose table) {
+      table-layout: fixed;
+      font-size: 0.8125rem;
+    }
+
+    .post__column :global(.prose th),
+    .post__column :global(.prose td) {
+      padding-inline: var(--space-1);
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+  }
+</style>

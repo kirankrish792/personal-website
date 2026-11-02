@@ -1,0 +1,295 @@
+---
+import { render } from 'astro:content';
+import { Picture } from 'astro:assets';
+import Base from '~/layouts/Base.astro';
+import portrait from '~/assets/portrait/kiran.png';
+import cutout from '~/assets/portrait/kiran-cutout.png';
+import { Image } from 'astro:assets';
+import person from '~/data/person.json';
+import { page } from '~/lib/content';
+import { IDS, breadcrumbNode, webPageNode } from '~/lib/schema';
+import { SITE } from '~/site.config';
+
+const entry = await page('about');
+const d = entry.data;
+const { Content } = await render(entry);
+
+const facts = ['Founder of Txtudio', 'CEO of Lofritex', 'Founding chair, IEEE CS at CEV', 'Plans before he builds', 'Runs four agents in parallel', 'From Kozhikode, Kerala'];
+
+const columns = [
+  {
+    title: 'Recognition',
+    items: ['Txtudio: Kerala Startup Mission recognised', 'Txtudio: Startup India (DPIIT) recognised', 'Snaptiqz: partner of Kerala Police HAC’KP 2026', 'iNSiGHT: hackathon winner, CAPE Fest'],
+  },
+  {
+    title: 'Leadership and community',
+    items: ['Founding Chairperson, IEEE Computer Society, CEV (2020 to 2023)', 'Mentor, CEV Innovation and Entrepreneurship Development Cell', 'Ran a Git, HTML, CSS and JavaScript task series for students (2021)', 'Hacktoberfest 2021 contributor'],
+  },
+  {
+    title: 'Capabilities',
+    items: person.skills.find((s) => s.group === 'Ways of working')?.items ?? [],
+    more: person.skills.find((s) => s.group === 'Product domains')?.items ?? [],
+  },
+  {
+    title: 'Organisations Txtudio works with',
+    items: ['Kerala Police', 'Kerala Police Cyberdome', 'Kochi Metro Rail Limited', 'IEEE', 'The Association of Surgeons of India', 'TEDxMACE', 'TEDxTIST'],
+  },
+];
+
+const schema = [
+  {
+    ...webPageNode({ path: '/about', type: 'AboutPage', name: d.title, description: d.description }),
+    mainEntity: { '@id': IDS.person },
+    ...(d.updated && { dateModified: d.updated.toISOString().slice(0, 10) }),
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} type="profile" schema={schema} page="about">
+  <section class="intro" aria-labelledby="about-title">
+    <h1 id="about-title" class="visually-hidden">{d.h1}</h1>
+    <div class="intro__numerals" aria-hidden="true">
+      <span class="numeral">K</span>
+      <span class="numeral">S</span>
+    </div>
+    <div class="intro__object" aria-hidden="true">
+      <div class="intro__figure" data-speed="0.15">
+        <div data-tilt>
+          <Image src={cutout} alt="" widths={[420, 640, 900]} sizes="(min-width: 56rem) 30vw, 90vw" loading="eager" />
+        </div>
+      </div>
+    </div>
+    <div class="intro__words">
+      <ul class="intro__facts display" aria-label="Quick facts">
+        {facts.map((f) => <li>{f}</li>)}
+      </ul>
+      <p class="intro__and display" aria-hidden="true">And</p>
+      <p class="intro__statement display">Building software for the work that can't go wrong, since 2024.</p>
+    </div>
+
+    <div class="intro__cols">
+      {
+        columns.map((c) => (
+          <div class="intro__col">
+            <h2 class="label">{c.title}</h2>
+            <ul>
+              {c.items.map((i) => <li>{i}</li>)}
+              {c.more?.map((i) => <li>{i}</li>)}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="story section" aria-label="Biography">
+    <div class="container story__grid">
+      <div class="story__side">
+        <div class="story__photo" data-tilt>
+          <Picture src={portrait} formats={['avif', 'webp']} fallbackFormat="jpg" widths={[360, 540, 720]} sizes="(min-width: 56rem) 28vw, 80vw" alt={d.photoAlt ?? SITE.name} />
+        </div>
+        {d.aka && <p class="label">{d.aka}</p>}
+      </div>
+      <div>
+        <p class="story__bio" data-reveal>{d.bio}</p>
+        <div class="prose story__prose" id="story">
+          <Content />
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .intro {
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    padding: calc(var(--bar) + var(--space-4)) var(--gutter) var(--space-6);
+    overflow: hidden;
+  }
+
+  .intro__numerals {
+    position: absolute;
+    inset: 22% 0 auto 0;
+    display: flex;
+    justify-content: space-between;
+    padding-inline: var(--gutter);
+    font-size: clamp(14rem, 34vw, 32rem);
+    pointer-events: none;
+  }
+
+  .intro__object {
+    position: absolute;
+    left: 41%;
+    top: 14%;
+    width: min(30vw, 27rem);
+    height: min(58svh, 33rem);
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+
+  /* The cut-out portrait: greyscale until hovered, its lower edge fading into the page. */
+  .intro__figure {
+    height: 100%;
+    perspective: 1200px;
+  }
+
+  .intro__figure > div {
+    height: 100%;
+  }
+
+  .intro__object :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: 50% 100%;
+    filter: grayscale(1) contrast(1.04);
+    -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent);
+    mask-image: linear-gradient(to bottom, #000 72%, transparent);
+    transition: filter 0.9s var(--ease-out);
+  }
+
+  .intro__object:hover :global(img) {
+    filter: none;
+  }
+
+  .intro__words {
+    grid-column: 2;
+    position: relative;
+    z-index: 2;
+    padding: var(--space-7) 0 0 18%;
+  }
+
+  .intro__facts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: clamp(1.5rem, 1.85vw, 2rem);
+    line-height: 1.04;
+  }
+
+  .intro__facts li {
+    transition: transform 0.4s var(--ease-out), color 0.3s;
+  }
+
+  .intro__facts li:hover {
+    transform: translateX(0.4em);
+    color: var(--fg);
+  }
+
+  .intro__and {
+    margin-block: var(--space-5) var(--space-2);
+    font-size: clamp(1.5rem, 1.85vw, 2rem);
+  }
+
+  .intro__statement {
+    font-size: clamp(1.5rem, 1.85vw, 2rem);
+    line-height: 1.04;
+  }
+
+  .intro__cols {
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-5);
+    padding-top: var(--space-6);
+  }
+
+  .intro__col ul {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    font-size: var(--step--1);
+    line-height: 1.35;
+  }
+
+  .story__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: var(--space-8);
+  }
+
+  .story__side {
+    position: sticky;
+    top: calc(var(--bar) + var(--space-5));
+    align-self: start;
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .story__photo {
+    border: 1px solid var(--fg);
+    overflow: hidden;
+  }
+
+  .story__photo :global(img) {
+    width: 100%;
+    height: auto;
+    filter: grayscale(1) contrast(1.05);
+    transition: filter 0.6s var(--ease-out), transform 0.8s var(--ease-out);
+  }
+
+  .story__photo:hover :global(img) {
+    filter: none;
+    transform: scale(1.03);
+  }
+
+  .story__bio {
+    max-width: 44rem;
+    font-size: clamp(1.15rem, 1.55vw, 1.45rem);
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+    margin-bottom: var(--space-8);
+  }
+
+  @media (max-width: 56rem) {
+    .intro {
+      grid-template-columns: 1fr;
+      padding-top: calc(var(--bar) + var(--space-5));
+    }
+
+    .intro__object {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      width: 100%;
+      height: 48svh;
+    }
+
+    .intro__words {
+      padding-top: var(--space-4);
+    }
+
+    .intro__numerals {
+      inset: 8% 0 auto 0;
+    }
+
+    .intro__words {
+      grid-column: 1;
+      padding-left: 0;
+    }
+
+    .intro__cols {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .story__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .story__side {
+      position: static;
+    }
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+title: "ESP8266 Fingerprint Attendance System"
+h1: "From fingertip to dashboard"
+description: "An ESP8266 NodeMCU reads a fingerprint and an Express app logs attendance in Firebase: the device protocol, a sibling dashboard and lessons on auth."
+summary: "Fingerprint attendance on an ESP8266, with an Express admin app backed by Firebase."
+kind: project
+year: 2022
+yearEnd: 2022
+role: "Developer"
+stack:
+  - "ESP8266 NodeMCU"
+  - "PlatformIO"
+  - "Arduino C++"
+  - "Adafruit Fingerprint Sensor Library"
+  - "Express"
+  - "EJS"
+  - "Firebase"
+outcome: "Firmware, an admin app and the protocol between them, built June to September 2022."
+order: 4
+links:
+  - label: "Smart farming dashboard source"
+    href: "https://github.com/kirankrish792/Smart-farming-system"
+needsConfirmation:
+  - "Solo build or team project, and who to credit for which part"
+  - "How fingerprints were enrolled on the sensor and linked to student records"
+  - "Where the system was used or tested, if anywhere"
+  - "Hardware photo or wiring diagram"
+  - "Whether the smart farming sensor hardware was part of the work (its code is not in the repository)"
+  - "Approval to link the Attendance-list repository"
+pubDate: 2026-10-31
+---
+
+## At a glance
+
+In 2022 I worked on an IoT fingerprint attendance system that turns a fingertip on a sensor into a timestamped record. An ESP8266 NodeMCU sends the matched fingerprint ID to an Express server, which finds the student and logs the time in Firebase. Deleting a student in the EJS admin app also deletes their fingerprint from the device.
+
+## How the system fits together
+
+The system has four layers:
+
+| Layer | Its job | Built with |
+|---|---|---|
+| Sensor | Stores fingerprint templates and matches a finger to an ID | A fingerprint sensor driven by the Adafruit Fingerprint Sensor Library |
+| Firmware | Reads the sensor and calls the server over HTTP | ESP8266 NodeMCU, PlatformIO and the Arduino framework, about 13 KB of C++ |
+| Admin app | Roster, student pages and the device endpoints | Express with EJS views, ejs-mate layouts and method-override |
+| Data | Students and their attendance timestamps | Firebase |
+
+The admin app gives each new student a UUID. Each student page lists that student's attendance timestamps.
+
+## The device and server protocol
+
+The device and the server share a small protocol, keyed on the sensor's fingerprint ID, `Finger_id`.
+
+| Direction | Call | What happens |
+|---|---|---|
+| Device to server | `POST /studentDetails` | The server finds the student whose record holds that `Finger_id` |
+| Device to server | `POST /Attendance` | The server records a timestamp against the student |
+| Server to device | A delete request over the local network | The device removes that `Finger_id` from the sensor |
+
+The third call matters most. The sensor keeps its own store of fingerprints, separate from Firebase, so the system has two sources of truth.
+
+When an admin deletes a student, the server also clears the matching fingerprint on the device. A removed student's fingerprint cannot keep matching a record that no longer exists.
+
+That call also means the server has to reach the device over the local network, which ties the two to the same network.
+
+## A sibling build: the smart farming dashboard
+
+In the same months I worked on a smart farming dashboard, another Express and EJS app. It reads four Adafruit IO feeds through the Adafruit IO REST API: temperature, humidity, soil moisture and soil temperature. Each reading has its own monitor page, and the app can delete data points.
+
+Sensor feeds can carry a sentinel value, 2147483647, which is the largest 32-bit signed integer. One such reading would swamp any average, so the dashboard skips it before averaging.
+
+The interface is built on a ready-made admin dashboard template. The code is on GitHub as [Smart-farming-system](https://github.com/kirankrish792/Smart-farming-system).
+
+## What I would do differently
+
+Today I would design the system's boundaries first:
+
+1. **Authentication on every route.** The admin pages would sit behind a login, and the device endpoints behind their own credentials.
+2. **Secrets out of source control.** Configuration would come from the environment, with an example file in the repository and secret scanning before every push.
+3. **Device authentication in both directions.** Each device would carry its own credential on every call, and it would accept a delete request only from a server it can verify.
+4. **A README with the wiring and the protocol.** Someone else could then rebuild the device from the repository alone.
+
+Security review is now a large share of my work with coding agents. I describe how I work on the [About page](/about), and more projects are on the [work page](/work).

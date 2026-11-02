@@ -1,0 +1,70 @@
+---
+title: "Travelian: Full-Stack Travel Review App"
+h1: "Travelian"
+description: "Built on the YelpCamp course architecture, then extended: my Express, MongoDB and EJS travel review app with an admin dashboard and a rating model."
+summary: "Travel review platform built on YelpCamp, extended with an admin dashboard and rating model."
+kind: project
+year: 2022
+yearEnd: 2022
+role: "Full-stack developer"
+stack:
+  - "Express"
+  - "MongoDB"
+  - "Mongoose"
+  - "EJS"
+  - "Bootstrap"
+  - "Passport"
+  - "Mapbox"
+  - "Cloudinary"
+outcome: "My most-iterated public repository: 38 commits, pinned on my GitHub profile."
+order: 5
+links:
+  - label: "Source on GitHub"
+    href: "https://github.com/kirankrish792/Travelian"
+repo: "https://github.com/kirankrish792/Travelian"
+credits: "Built on the YelpCamp architecture from a well-known web development course; the admin dashboard, rating model, profile page and admin CLI are mine."
+needsConfirmation:
+  - "Which features came from the YelpCamp course and which were added (this page treats the admin dashboard, rating model, profile page and admin CLI as additions)"
+  - "Screenshots or a redeployed demo"
+pubDate: 2026-10-31
+---
+
+## At a glance
+
+Travelian is a full-stack travel review platform I built in 2022 with Express, MongoDB and EJS. It began from YelpCamp, the campground review app taught in a well-known web development course, and keeps that architecture. I added an admin dashboard with user management, a separate rating model, a profile page and an admin seeding tool.
+
+## Where it started
+
+YelpCamp gives you the skeleton of a review site. It covers Express routes, Mongoose models, EJS views, Passport login, reviews, Cloudinary image uploads and clustered Mapbox maps. I kept that skeleton, and the code shows it: models, controllers, routes and views still use "campground" names.
+
+In Travelian, those pieces serve travel destinations. Mapbox geocoding turns a typed place name into coordinates for a clustered overview map and a map on each listing. Photos upload to Cloudinary through multer-storage-cloudinary, and reviews carry star ratings.
+
+I worked on it from May to September 2022 across 38 commits, more than any other public repository of mine. It is the one project I pinned on my GitHub profile.
+
+## What I added
+
+- **An admin dashboard.** Admin routes and views, including user management.
+- **A separate rating model.** A `reviewRating` model holds star ratings alongside the reviews.
+- **A user profile page.**
+- **An admin seeding CLI.** An Inquirer-based command-line script, run with `npm run admin`, seeds an admin account.
+
+The seeding script solves a small but real problem. An admin dashboard is no use until the first admin account exists. Creating that account should not mean editing the database by hand.
+
+## Hardening
+
+Travelian keeps the security patterns that come with the YelpCamp architecture. Each one closes a specific gap:
+
+- **Validation.** Joi schemas check form input on the server, and client-side validation catches mistakes before submission.
+- **Query injection.** express-mongo-sanitize strips MongoDB operators, such as keys starting with `$`, from request data.
+- **Unsafe markup.** sanitize-html removes unsafe HTML from user-submitted text.
+- **Sessions.** Sessions live in MongoDB through connect-mongo, behind an httpOnly cookie that lasts seven days.
+- **Errors.** An `ExpressError` class and a `catchAsync` wrapper send failures to one error handler.
+
+## What I would do differently
+
+1. **Rename the domain model.** I would replace "campground" across models, controllers, routes and views, so the code speaks the product's language.
+2. **Write the origin into the repository.** A README would say what came from the course, what I added and how to run it.
+3. **Ship it.** A live demo and screenshots would help, because a pinned project with neither asks readers to take it on trust.
+4. **Keep vendored code out.** Bootstrap would come from the package manager, not a bundle committed to the repository.
+
+More of my work is on the [work page](/work). How I went from projects like this to founding Lofritex and Txtudio is on the [About page](/about).

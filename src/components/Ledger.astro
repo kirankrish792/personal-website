@@ -1,0 +1,41 @@
+---
+export interface LedgerRow {
+  year: string;
+  name: string;
+  role?: string;
+  summary: string;
+  href: string;
+}
+
+interface Props {
+  heading: string;
+  id: string;
+  rows: LedgerRow[];
+  aside?: { label: string; href: string };
+  level?: 'h2' | 'h3';
+}
+
+const { heading, id, rows, aside, level = 'h2' } = Astro.props;
+const Heading = level;
+---
+
+<section class="ledger" aria-labelledby={id} data-reveal>
+  <div class="ledger__head">
+    <Heading id={id}>{heading}</Heading>
+    {aside && <a href={aside.href}>{aside.label}</a>}
+  </div>
+  <ol class="ledger__rows">
+    {
+      rows.map((row) => (
+        <li class="ledger__row">
+          <a class="ledger__link" href={row.href}>
+            <span class="ledger__year">{row.year}</span>
+            <span class="ledger__name">{row.name}</span>
+            <span class="ledger__role">{row.role}</span>
+            <span class="ledger__summary">{row.summary}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</section>

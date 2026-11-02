@@ -1,0 +1,129 @@
+---
+/**
+ * The Lab's small tools as a register: year, name, what it does, its stack and the repository,
+ * newest first. The section is also the page's last formation step: a few grains in the margins.
+ *
+ *   <LabTools heading="Small tools" tools={d.tools} />
+ */
+interface Tool {
+  name: string;
+  summary: string;
+  stack: string[];
+  year: number;
+  repo: string;
+}
+
+interface Props {
+  heading: string;
+  tools: Tool[];
+  id?: string;
+}
+
+const { heading, tools, id = 'small-tools' } = Astro.props;
+const headingId = `${id}-title`;
+const rows = [...tools].sort((a, b) => b.year - a.year);
+---
+
+<section
+  class="section tools"
+  id={id}
+  aria-labelledby={headingId}
+>
+  <div class="container" data-reveal>
+    <div class="ledger__head">
+      <h2 id={headingId}>{heading}</h2>
+    </div>
+    <ol class="ledger__rows">
+      {
+        rows.map((tool) => (
+          <li class="ledger__row tool">
+            <h3 class="ledger__name tool__name">{tool.name}</h3>
+            <span class="ledger__year tool__year">{tool.year}</span>
+            <div class="tool__body">
+              <p class="ledger__summary">{tool.summary}</p>
+              {tool.stack.length > 0 && (
+                <ul class="chips tool__stack" aria-label="Stack">
+                  {tool.stack.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <a class="tool__repo" href={tool.repo} rel="noopener">
+              Repository<span class="visually-hidden">{`, ${tool.name}`}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  /* Same register as the Home and Work ledgers; the name leads in the markup so it heads its row. */
+  .tool {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1.25fr) minmax(0, 2.75fr) auto;
+    column-gap: var(--space-5);
+    row-gap: var(--space-2);
+    align-items: baseline;
+    padding: var(--space-5) 0;
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tool__year {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .tool__name {
+    grid-column: 2;
+    grid-row: 1;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .tool__body {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .tool__stack {
+    margin-top: var(--space-3);
+  }
+
+  .tool__repo {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-block: calc((1.55em - 2.75rem) / 2);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 56rem) {
+    .tool {
+      grid-template-columns: 3.5rem minmax(0, 1fr);
+      padding: var(--space-4) 0;
+    }
+
+    .tool__name,
+    .tool__body,
+    .tool__repo {
+      grid-column: 2;
+      grid-row: auto;
+      justify-self: start;
+    }
+
+    .tool__year {
+      grid-row: 1;
+    }
+
+    .tool__repo {
+      margin-block: 0;
+    }
+  }
+</style>

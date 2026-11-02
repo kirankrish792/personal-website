@@ -1,0 +1,9 @@
+---
+interface Props {
+  graph: Record<string, unknown>[];
+}
+const { graph } = Astro.props;
+const json = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" set:html={json} />

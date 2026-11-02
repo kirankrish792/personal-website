@@ -1,0 +1,109 @@
+---
+title: "25 of 29 code-changing agent sessions had a plan"
+description: "A self-reported Paxel report on 696 of my AI agent sessions found 25 of 29 code-changing ones began from a plan. What I plan, and how I check the output."
+pubDate: 2026-10-31
+pillar: engineering
+tags:
+  - "AI agents"
+  - "planning"
+  - "code review"
+  - "Lofritex"
+summary: "Plan-first means a coding agent starts from a written plan, not a one-line task. A self-reported Y Combinator Paxel report on my 696 agent sessions found that 25 of the 29 code-changing sessions started from one. Here is how I plan, run up to four sessions at once and review the output, plus what we practise at Lofritex."
+relatedWork: lofritex
+draft: false
+needsConfirmation:
+  - "Agent tools: the Paxel report names models (Claude Opus 5.5 in 89% of sessions, Claude Opus 4.7 in 8%), not tools, so the post names no tool. Confirm whether to name the tool."
+  - "Advice and readings inferred from the report, not stated in it: each parallel session needs its own plan and boundary; plans that share a module should run one after the other; a redirect that widens scope needs a new plan. Confirm Kiran agrees with each."
+  - "Lofritex post details come from a research summary, not the full text. Check that 'Clean input = reliable output.' belongs to the Radical Data Hygiene rule and 'We leave the room with a fix, not a to-do list.' to Fix-it Fridays, and that Fix-it Fridays still run monthly (the post uses the present tense)."
+  - "Permission to publish the 'continue process' prompt detail (sent 13 times, from the Paxel report)."
+  - "The Paxel report URL may change after 12 Nov 2026, when Paxel moves sign-in to YC accounts. Recheck the link then."
+  - "'Our team of 10 at Lofritex' is as stated in the April 2026 Lofritex post; confirm it is still the right figure to repeat."
+---
+
+I run two software companies in Kozhikode, [Txtudio](/work/txtudio) and [Lofritex](/work/lofritex). I also direct a lot of AI coding agents: a Paxel builder report dated 20 October 2026 counted 696 of my sessions over 139 hours.
+
+The number I care about most is much smaller. Of the 29 sessions that changed code, 25 started from a plan.
+
+## What did the report measure?
+
+Paxel is a free Y Combinator experiment that turns coding-agent transcripts into a builder report. The analysis runs locally, short excerpts go out for scoring, and the raw transcripts stay on your machine. Mine is [a self-reported Y Combinator Paxel builder report](https://paxel.ycombinator.com/results/6ulchnig), and these are its headline figures.
+
+| Measure | My report |
+|---|---|
+| Agent sessions analysed | 696 |
+| Time with agents | 139 hours |
+| Code-changing sessions that started from a plan | 25 of 29 (86%) |
+| Most main sessions running at once | 4 |
+| Mid-task course changes | 4% of the time |
+| Detected decisions that were architectural | 50 of 56 |
+| Model used most | Claude Opus 5.5, in 89% of sessions |
+
+Three caveats come first. The report is self-reported, and it says that in the sampled work I mostly directed security reviews rather than implementation. The plan-first figure covers only the 29 sessions that changed code.
+
+## What counts as a plan?
+
+Paxel counts "a plan file, plan mode, or a plan written a session or two earlier." What these share is that the plan exists before the first edit. Written down, it can be reread, handed to another session or shared with the team.
+
+The patterns and strengths in my report read like the sections of a good plan:
+
+- **The user's workflow, backwards.** "Workflow from User Backwards" showed up three times. Start from what the person using the software must finish, then work back to the code.
+- **A reference.** "Follow the Reference Product" showed up three times. Name a product that already does this well, and say which parts to follow.
+- **The boundary.** The report says I keep architectural boundaries clear. A plan names the parts of the system a change may touch and the parts it must leave alone.
+- **What to reuse.** It also says I favour reuse over parallel implementations. A plan names the existing code to extend, so nobody builds a second version of it.
+- **How it gets checked.** "Audit Completeness" showed up five times. A review is not finished until it covers everything in scope.
+
+## Why plan before an agent writes code?
+
+The expensive decisions are rarely about syntax. Paxel classed 50 of my 56 detected decisions as architectural, and those are the ones I want made once, in writing, before an agent starts.
+
+A plan also keeps the steering light. The report counts about two prompts per session, and I change course mid-task 4% of the time.
+
+My go-to prompt, sent 13 times, is two words: "continue process". Two words are enough only when a plan already says what comes next.
+
+Paxel calls my style "a thinking partner": detailed, context-rich prompts that bring the agent into the problem, not just the task. It also tagged me a "Frame Breaker", someone who rewrites the question before answering it. The plan is where that rewriting happens.
+
+## How do four sessions run in parallel?
+
+The report shows up to four main agent sessions running at once. Parallel work is where planning pays off, because four agents improvising in one codebase will collide.
+
+Running sessions side by side works only when each has its own plan and its own boundary. If two plans need the same module, they are not parallel work and should run one after the other.
+
+Parallel sessions multiply output, and they multiply review. A plan cannot do the reviewing for you.
+
+## How do I check what the agents produce?
+
+Paxel's one-line summary says I direct agents across HRM, CRM and integrations, "then demand file-and-line evidence before accepting security findings." An agent can report a vulnerability with complete confidence and still be wrong.
+
+A finding that names a file and a line can be checked, and a finding that can be checked can be closed. The report's phrase for this is that I make security claims falsifiable.
+
+My Lofritex post on AI has a rule called "Radical Data Hygiene": clean input, reliable output. Asking for evidence applies the same rule to what comes back.
+
+## What does plan-first look like for a team?
+
+A plan is personal until someone else can read it. In April 2026 I wrote [AI Isn't a Shortcut, It's Our 11th Team Member](https://lofritex.com/blog/ai-isnt-a-shortcut-its-our-11th-team-member/) about how our team of 10 at Lofritex works with AI. Three of its rules carry straight over to agent sessions:
+
+- **Loud AI.** If I use a prompt to refactor code or summarise a client's messy requirements, I share that prompt. A plan is the most useful prompt to share.
+- **Method sharing instead of status meetings.** We cut status-update meetings in favour of sharing methods. A plan file is a method anyone can read.
+- **Fix-it Fridays.** Once a month we hold a 90-minute Fix-it Friday, the AI edition. We leave the room with a fix, not a to-do list.
+
+## What do the numbers not prove?
+
+Paxel was fair about the limits. One of its growth notes was to make the planning question measurable. It found low unresolved errors in 12 planned sessions, but had no no-plan baseline to compare them with.
+
+With only four unplanned code-changing sessions, I cannot claim that plans cause better results. I can only say the habit is consistent.
+
+The other note was to close the review loop more visibly. A review that ends without a recorded fix or decision leaves the next person guessing.
+
+One more honest entry. A narrow mid-task redirect that followed a reference product went well, while a wider one had a negative tracked outcome. My reading is that a redirect which widens the scope needs a new plan, not a longer prompt.
+
+## How can you start planning agent sessions?
+
+1. Write the plan before the first prompt: the user's workflow, a reference, the boundary, what to reuse and how you will check it.
+2. Bring the agent into the problem with context and constraints, not a one-line task.
+3. Give each parallel session its own plan and its own boundary.
+4. Keep follow-ups short. If a correction needs a long prompt, write a new plan instead.
+5. Accept a finding only when it names a file and a line.
+6. Share plans and prompts with the people you work with.
+7. End every review with a fix or a written decision.
+
+The rest of how I work, including the tools, is on my [About page](/about). Boundaries mattered long before agents, as my [IoT attendance walkthrough](/writing/fingerprint-to-dashboard) shows. If your team is setting its own rules for agents, [start a conversation](/contact).

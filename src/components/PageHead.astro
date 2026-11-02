@@ -1,0 +1,23 @@
+---
+/**
+ * Page header used by every inner page: one coral display H1 that rises in on arrival (CSS),
+ * an optional lede, and optional extra content in the slot.
+ *
+ *   <PageHead h1="Work" lede="…" />
+ */
+interface Props {
+  h1: string;
+  lede?: string;
+  id?: string;
+}
+
+const { h1, lede, id = 'page-title' } = Astro.props;
+---
+
+<header class="page-head">
+  <div class="container">
+    <h1 id={id} data-rise>{h1}</h1>
+    {lede && <p class="lede" data-rise>{lede}</p>}
+    <slot />
+  </div>
+</header>

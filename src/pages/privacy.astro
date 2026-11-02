@@ -1,0 +1,54 @@
+---
+/** Privacy: the page heading and the body from src/content/pages/privacy.md, set for reading. */
+import { render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import { formatDate, page } from '~/lib/content';
+import { breadcrumbNode, webPageNode } from '~/lib/schema';
+
+const privacy = await page('privacy');
+const d = privacy.data;
+const { Content } = await render(privacy);
+const updated = d.updated?.toISOString().slice(0, 10);
+
+const schema = [
+  {
+    ...webPageNode({ path: '/privacy', name: d.title, description: d.description }),
+    ...(updated ? { dateModified: updated } : {}),
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: d.h1, path: '/privacy' },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} schema={schema} page="privacy">
+  <PageHead h1={d.h1} lede={d.intro} />
+
+  <div class="container privacy">
+    <div class="prose">
+      <Content />
+    </div>
+    {
+      d.updated && (
+        <p class="privacy__updated">
+          Updated{' '}<time datetime={updated}>{formatDate(d.updated)}</time>
+        </p>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .privacy {
+    padding-bottom: var(--space-9);
+  }
+
+  .privacy__updated {
+    margin-top: var(--space-7);
+    color: var(--fg-faint);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

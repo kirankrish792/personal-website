@@ -1,0 +1,89 @@
+---
+import { render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import WorkLedger from '~/components/WorkLedger.astro';
+import { page, workEntries } from '~/lib/content';
+import { breadcrumbNode, webPageNode } from '~/lib/schema';
+import { SITE } from '~/site.config';
+
+const work = await page('work');
+const d = work.data;
+const { Content } = await render(work);
+const hasBody = Boolean(work.body?.trim());
+
+// Companies first, then projects, each in the order set by its frontmatter (the same order as the ledger).
+const all = await workEntries();
+const entries = [...all.filter((w) => w.data.kind === 'company'), ...all.filter((w) => w.data.kind === 'project')];
+
+const schema = [
+  {
+    ...webPageNode({ path: '/work', name: d.title, description: d.description, type: 'CollectionPage' }),
+    ...(d.updated && { dateModified: d.updated.toISOString().slice(0, 10) }),
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: entries.length,
+      itemListElement: entries.map((w, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: `${SITE.url}/work/${w.id}`,
+        name: w.data.h1,
+      })),
+    },
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'Work', path: '/work' },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} schema={schema} page="work">
+  <PageHead h1={d.h1} lede={d.intro} />
+
+  <div class="section work-index">
+    <div class="container">
+      <WorkLedger entries={entries} />
+    </div>
+  </div>
+
+  {
+    hasBody && (
+      <div class="section work-more">
+        <div class="container">
+          <div class="work-more__body" data-reveal>
+            <Content />
+          </div>
+        </div>
+      </div>
+    )
+  }
+</Base>
+
+<style>
+  .work-index {
+    padding-top: var(--space-7);
+  }
+
+  .work-more {
+    padding-block: var(--space-8);
+  }
+
+  .work-more__body {
+    max-width: 44rem;
+  }
+
+  .work-more__body :global(p) {
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: var(--fg-soft);
+  }
+
+  .work-more__body :global(p + p) {
+    margin-top: var(--space-4);
+  }
+
+  .work-more__body :global(a) {
+    color: var(--fg);
+  }
+</style>

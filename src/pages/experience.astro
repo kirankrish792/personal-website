@@ -1,0 +1,253 @@
+---
+import { render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import Timeline from '~/components/Timeline.astro';
+import type { TimelineEntry } from '~/components/Timeline.astro';
+import person from '~/data/person.json';
+import { MILESTONES } from '~/data/milestones';
+import { page, workEntries } from '~/lib/content';
+import { breadcrumbNode, webPageNode } from '~/lib/schema';
+
+const entry = await page('experience');
+const d = entry.data;
+const { Content, headings } = await render(entry);
+
+/** Dated milestones, as a strip of years. */
+const milestones = MILESTONES;
+
+const RESUME_PDF = '/Kiran-Krishnakumar-Subhashini-Resume.pdf';
+
+/** Companies with a case study under /work, by id (txtudio, lofritex). */
+const caseStudies = new Set((await workEntries()).filter((w) => w.data.kind === 'company').map((w) => w.id));
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+/** A site link labelled with its host; screen readers also hear whose site it is (two rows link to cev.ac.in). */
+const siteLink = (href: string, org: string) => ({ label: new URL(href).hostname.replace(/^www\./, ''), href, context: ` (${org})` });
+
+// person.json lists each group newest first. Roles, then the IEEE chapter, then the degree keeps
+// the whole timeline newest first without guessing the dates the data leaves out.
+const roles: TimelineEntry[] = person.experience.map((e) => {
+  const id = slug(e.org);
+  const links: NonNullable<TimelineEntry['links']> = [];
+  if (e.url) links.push(siteLink(e.url, e.org));
+  if (caseStudies.has(id)) links.push({ label: 'Read the case study', href: `/work/${id}`, context: ` about ${e.org}` });
+  return { id, org: e.org, role: e.role, legalName: e.legalName, start: e.start, end: e.end, summary: e.summary, highlights: e.highlights, links };
+});
+
+const leadership: TimelineEntry[] = person.leadership.map((l) => ({
+  id: slug(l.org.split(',')[0]),
+  org: l.org,
+  role: l.role,
+  start: l.start,
+  end: l.end,
+  summary: l.summary,
+}));
+
+const education: TimelineEntry[] = person.education.map((e) => ({
+  id: slug(e.institution),
+  org: e.institution,
+  role: e.field ? `${e.degree} in ${e.field}` : e.degree,
+  start: e.start,
+  end: e.end,
+  links: e.url ? [siteLink(e.url, e.institution)] : [],
+}));
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "2022-05" prints "May 2022"; "2022" prints "2022". */
+const when = (value: string) => {
+  const [year, month] = value.split('-');
+  return month ? `${MONTHS[Number(month) - 1]} ${year}` : year;
+};
+
+const schema = [
+  {
+    ...webPageNode({ path: '/experience', name: d.title, description: d.description }),
+    ...(d.updated && { dateModified: d.updated.toISOString().slice(0, 10) }),
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'Experience', path: '/experience' },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} schema={schema} page="experience">
+  <PageHead h1={d.h1} lede={d.intro} />
+
+  <div class="container years" aria-label="Milestones" role="list">
+    {
+      milestones.map((m) => (
+        <div class="years__item" role="listitem" data-reveal>
+          <span class="years__num numeral" aria-hidden="true">{`’${m.year}`}</span>
+          <span class="visually-hidden">20{m.year}: </span>
+          <span class="years__title">{m.title}</span>
+          <span class="label">{m.label}</span>
+        </div>
+      ))
+    }
+  </div>
+
+  <section class="section roles" aria-labelledby="roles">
+    <div class="container">
+      <div class="ledger__head">
+        <h2 id="roles">Roles and education</h2>
+      </div>
+      <Timeline entries={[...roles, ...leadership, ...education]} />
+    </div>
+  </section>
+
+  {
+    person.certifications.length > 0 && (
+      <section class="section" aria-labelledby="certifications">
+        <div class="container">
+          <div class="ledger__head">
+            <h2 id="certifications">Certifications</h2>
+          </div>
+          <ul class="certs" role="list" data-reveal>
+            {person.certifications.map((c) => (
+              <li class="certs__row">
+                <span class="certs__name">{c.name}</span>
+                {c.issuer && <span class="certs__issuer">{c.issuer}</span>}
+                {c.date && (
+                  <span class="certs__date">
+                    <time datetime={c.date}>{when(c.date)}</time>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section" aria-labelledby={headings[0]?.slug}>
+    <div class="container">
+      <div class="prose body" data-reveal>
+        <Content />
+      </div>
+    </div>
+  </section>
+
+  <div class="section download">
+    <div class="container download__row">
+      <a class="btn btn--primary" href={RESUME_PDF} download data-astro-prefetch="false">{d.resumeLabel ?? 'Download résumé (PDF)'}</a>
+      <a class="download__web" href="/resume">View the résumé as a web page</a>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .years {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: var(--space-5) var(--space-4);
+    padding-bottom: var(--space-7);
+  }
+
+  .years__item {
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--fg);
+  }
+
+  .years__num {
+    font-size: clamp(3.4rem, 6vw, 5.5rem);
+    line-height: 0.9;
+    color: var(--fg);
+    transition: color 0.3s, transform 0.5s var(--ease-out);
+  }
+
+  .years__item:hover .years__num {
+    color: var(--coral);
+    transform: translateY(-0.12em);
+  }
+
+  .years__title {
+    font-weight: 500;
+    line-height: 1.25;
+  }
+
+  .roles {
+    padding-top: var(--space-7);
+  }
+
+  .certs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .certs__row {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--space-5);
+    align-items: baseline;
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--rule);
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .certs__date {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+    color: var(--fg-faint);
+  }
+
+  .certs__name {
+    grid-column: 4 / span 5;
+    font-size: var(--step-1);
+    font-weight: 500;
+  }
+
+  .certs__issuer {
+    grid-column: 9 / span 4;
+    color: var(--fg-soft);
+  }
+
+  .body > :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .download {
+    padding-block: var(--space-7) var(--space-9);
+  }
+
+  .download__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  .download__web {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  @media (max-width: 56rem) {
+    .certs__row {
+      grid-template-columns: 5.5rem minmax(0, 1fr);
+      row-gap: var(--space-1);
+    }
+
+    .certs__date {
+      grid-column: 1;
+    }
+
+    .certs__name,
+    .certs__issuer {
+      grid-column: 2;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .band__frame {
+      aspect-ratio: 1.6;
+    }
+  }
+</style>

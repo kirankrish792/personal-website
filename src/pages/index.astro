@@ -1,0 +1,189 @@
+---
+import { Picture } from 'astro:assets';
+import Base from '~/layouts/Base.astro';
+import portrait from '~/assets/portrait/kiran.png';
+import HomeHero from '~/components/HomeHero.astro';
+import Companies from '~/components/Companies.astro';
+import { formatDate, page, posts, workEntries } from '~/lib/content';
+import { IDS } from '~/lib/schema';
+import { SITE } from '~/site.config';
+import person from '~/data/person.json';
+
+const home = await page('home');
+const d = home.data;
+const work = await workEntries();
+const latest = (await posts()).slice(0, 3);
+
+const facts = [
+  'Founder and CEO of Txtudio Coretech',
+  'CEO and founder of Lofritex IT Solutions',
+  'Founding chair, IEEE Computer Society at CEV',
+  'Mentor at CEV’s entrepreneurship cell',
+  'B.Tech, College of Engineering Vadakara',
+  'Hackathon winner at CAPE Fest',
+];
+
+const schema = [
+  {
+    '@type': 'ProfilePage',
+    '@id': `${SITE.url}/#profile`,
+    url: SITE.url,
+    name: d.title,
+    inLanguage: SITE.locale,
+    mainEntity: { '@id': IDS.person },
+    isPartOf: { '@id': IDS.website },
+    ...(d.updated && { dateModified: d.updated.toISOString().slice(0, 10) }),
+  },
+];
+---
+
+<Base title={d.title} description={d.description} type="profile" schema={schema} page="home">
+  <HomeHero name={d.h1} roleLine={d.roleLine ?? ''} aka={d.aka} />
+
+  <Companies entries={work} />
+
+  <section class="meet" aria-labelledby="meet-title">
+    <div class="meet__visual" data-speed="0.08">
+      <figure class="meet__photo" data-tilt data-cursor="Hello">
+        <Picture src={portrait} formats={['avif', 'webp']} fallbackFormat="jpg" widths={[420, 640, 900]} sizes="(min-width: 56rem) 40vw, 90vw" alt={`${SITE.name} smiling in a navy suit`} loading="lazy" />
+      </figure>
+    </div>
+    <div class="meet__text">
+      <h2 id="meet-title" class="label">Who is Kiran</h2>
+      <ul class="meet__facts display">
+        {facts.map((f) => <li data-reveal>{f}</li>)}
+      </ul>
+      <p class="meet__and display" data-reveal>And</p>
+      <p class="meet__intro" data-reveal>{d.intro}</p>
+      <a class="btn" href="/about" data-magnetic>More about me</a>
+    </div>
+  </section>
+
+  {
+    latest.length > 0 && (
+      <section class="section" aria-labelledby="recent-writing">
+        <div class="container">
+          <div class="ledger__head">
+            <h2 id="recent-writing">{d.writingHeading ?? 'Recent writing'}</h2>
+            <a href="/writing" class="label link-draw">All writing</a>
+          </div>
+          <ol class="ledger__rows">
+            {latest.map((p, i) => (
+              <li class="ledger__row" data-reveal>
+                <a class="ledger__link" href={`/writing/${p.id}`} data-cursor="Read">
+                  <span class="ledger__year">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="ledger__name">{p.data.title}</span>
+                  <span class="ledger__role">{formatDate(p.data.pubDate)}</span>
+                  <span class="ledger__summary">{p.data.description}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="closing" aria-labelledby="closing">
+    <div class="container">
+      <p class="label">{person.location.locality}, {person.location.region}</p>
+      <h2 id="closing" class="closing__line" data-split>{d.closingLine}</h2>
+      <a class="btn btn--primary" href="/contact" data-magnetic>Start a conversation</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .meet {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: center;
+    min-height: 100svh;
+    padding: var(--space-9) var(--gutter);
+    border-top: 1px solid var(--fg);
+  }
+
+  .meet__visual {
+    display: grid;
+    place-items: center;
+    perspective: 1200px;
+  }
+
+  .meet__photo {
+    position: relative;
+    width: min(100%, 30rem);
+    aspect-ratio: 4 / 5;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--fg);
+    box-shadow: 0 50px 80px -50px rgb(0 0 0 / 0.5);
+    rotate: -3deg;
+    transition: rotate 0.9s var(--ease-out);
+  }
+
+  .meet__photo:hover {
+    rotate: 0deg;
+  }
+
+  .meet__photo :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 18%;
+    filter: grayscale(1) contrast(1.05);
+    transform: scale(1.06);
+    transition:
+      filter 0.8s var(--ease-out),
+      transform 1.2s var(--ease-out);
+  }
+
+  .meet__photo:hover :global(img) {
+    filter: none;
+    transform: scale(1);
+  }
+
+  .meet__facts {
+    list-style: none;
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    font-size: clamp(1.5rem, 2.6vw, 2.6rem);
+    line-height: 1.02;
+  }
+
+  .meet__and {
+    margin-block: var(--space-6);
+    font-size: clamp(1.5rem, 2.6vw, 2.6rem);
+  }
+
+  .meet__intro {
+    max-width: 34rem;
+    font-size: var(--step-1);
+    margin-bottom: var(--space-6);
+  }
+
+  .closing {
+    padding: var(--space-10) 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .closing__line {
+    max-width: 52rem;
+    margin: var(--space-4) 0 var(--space-6);
+    font-size: clamp(2rem, 4vw, 3.6rem);
+    text-transform: uppercase;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  @media (max-width: 56rem) {
+    .meet {
+      grid-template-columns: 1fr;
+    }
+
+    .meet__photo {
+      width: min(100%, 22rem);
+    }
+  }
+</style>

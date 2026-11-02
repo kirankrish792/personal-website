@@ -1,0 +1,231 @@
+{
+  "name": "Kiran Krishnakumar Subhashini",
+  "alternateName": [
+    "Kiran K S",
+    "Kiran KS",
+    "Kiran K.S."
+  ],
+  "shortName": "Kiran K S",
+  "jobTitle": "Founder and CEO",
+  "description": "Kiran Krishnakumar Subhashini (Kiran K S) is a founder and software engineer in Kozhikode, Kerala, India. He is founder, CEO and managing director of Txtudio Coretech Private Limited and CEO of Lofritex IT Solutions LLP, and studied at College of Engineering Vadakara.",
+  "location": {
+    "locality": "Kozhikode",
+    "region": "Kerala",
+    "country": "India"
+  },
+  "url": "https://kirankrishnakumar.com",
+  "sameAs": [
+    "https://github.com/kirankrish792",
+    "https://www.linkedin.com/in/kiran-ks79ks"
+  ],
+  "education": [
+    {
+      "institution": "College of Engineering Vadakara",
+      "degree": "B.Tech",
+      "field": "Computer Science and Engineering",
+      "start": "2019",
+      "end": "2023",
+      "url": "https://www.cev.ac.in"
+    }
+  ],
+  "experience": [
+    {
+      "org": "Txtudio",
+      "legalName": "Txtudio Coretech Private Limited",
+      "url": "https://www.txtudio.com",
+      "role": "Founder, CEO and Managing Director",
+      "start": "2025-10",
+      "end": null,
+      "summary": "I co-founded Txtudio with Arun Rajanikanth (Director) and Devang C V (COO) and lead it from Kozhikode as CEO and managing director. We build software for the work that can't go wrong.",
+      "highlights": [
+        "Four products: Workeron Suite, Snaptiqz, DoYourDesign and Audit Management Solution",
+        "Recognised by Kerala Startup Mission and Startup India (DPIIT)",
+        "Company-reported: 500+ events and 25,000+ tickets on Snaptiqz, 10+ companies on Workeron",
+        "Snaptiqz is listed as a partner of Kerala Police HAC'KP 2026"
+      ]
+    },
+    {
+      "org": "Lofritex",
+      "legalName": "Lofritex IT Solutions LLP",
+      "url": "https://lofritex.com",
+      "role": "CEO and Founder",
+      "start": "2024-07",
+      "end": null,
+      "summary": "I co-founded Lofritex with Shibin Rasheed and Nandu Krishna T (CTO) and lead it as CEO. We build custom software, ERP, payroll and inventory systems, and web and mobile apps for clients in India, Saudi Arabia, Sweden and Dubai.",
+      "highlights": [
+        "Our product, Manage Matey ERP, grew out of a contractor ERP built for a client in Saudi Arabia",
+        "Client work includes the Mitee Interiors website, built in Astro, and a web page for Gear Monkey",
+        "Company-reported: 50+ projects, 10+ team members and clients in 4+ countries"
+      ]
+    },
+    {
+      "org": "Acodez",
+      "legalName": "Acodez",
+      "url": null,
+      "role": "Associate Software Engineer, then Lead Engineer",
+      "start": "2023",
+      "end": "2025",
+      "summary": "I joined Acodez as an associate software engineer and grew into the lead engineer role, leading a software development team and managing infrastructure.",
+      "highlights": []
+    },
+    {
+      "org": "CEV Innovation and Entrepreneurship Development Cell",
+      "legalName": "College of Engineering Vadakara",
+      "url": "https://www.cev.ac.in/en/iedc.html",
+      "role": "Mentor",
+      "start": null,
+      "end": null,
+      "summary": "I am a mentor in the Innovation and Entrepreneurship Development Cell (IEDC) at College of Engineering Vadakara, where I studied.",
+      "highlights": [
+        "Listed in the IEDC team as Founder, Lofritex and Txtudio",
+        "Lofritex and Txtudio both appear among the cell's entrepreneurship initiatives"
+      ]
+    }
+  ],
+  "leadership": [
+    {
+      "org": "IEEE Computer Society Student Branch Chapter, College of Engineering Vadakara",
+      "role": "Founding Chairperson",
+      "start": "2020-11",
+      "end": "2023-02",
+      "summary": "I founded the chapter and chaired it for over two years. In 2021 I ran a Git, HTML, CSS and JavaScript task series for students, published as seven repositories on the chapter's GitHub organisation."
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Full-stack Developer",
+      "issuer": "Udemy",
+      "date": "2022-05",
+      "url": null
+    },
+    {
+      "name": "TypeScript",
+      "issuer": null,
+      "date": "2024-03",
+      "url": null
+    },
+    {
+      "name": "Ethical hacking",
+      "issuer": "Udemy",
+      "date": null,
+      "url": null
+    }
+  ],
+  "skills": [
+    {
+      "group": "Languages",
+      "items": [
+        "TypeScript",
+        "JavaScript",
+        "Rust",
+        "Kotlin",
+        "Solidity",
+        "C++ for ESP8266 firmware",
+        "Python",
+        "HTML and CSS"
+      ]
+    },
+    {
+      "group": "Web",
+      "items": [
+        "Astro",
+        "SolidStart",
+        "React",
+        "Node.js",
+        "Express",
+        "MongoDB",
+        "Firebase",
+        "Tailwind CSS",
+        "Vite"
+      ]
+    },
+    {
+      "group": "IoT and Web3",
+      "items": [
+        "ESP8266 (NodeMCU)",
+        "PlatformIO",
+        "Adafruit IO",
+        "web3.js",
+        "MetaMask"
+      ]
+    },
+    {
+      "group": "Mobile and tooling",
+      "items": [
+        "Jetpack Compose",
+        "Docker",
+        "Git and GitHub"
+      ]
+    },
+    {
+      "group": "Product domains",
+      "items": [
+        "Business suites: HR, CRM, projects",
+        "CRM",
+        "Forms",
+        "Events and ticketing",
+        "ERP",
+        "Integrations"
+      ]
+    },
+    {
+      "group": "Ways of working",
+      "items": [
+        "Plan-first delivery",
+        "Directing AI coding agents",
+        "Evidence-based security review",
+        "Architecture decisions"
+      ]
+    }
+  ],
+  "knowsAbout": [
+    "Entrepreneurship",
+    "B2B software",
+    "Business suite software (HR, CRM, project management)",
+    "Event ticketing",
+    "ERP systems",
+    "Full-stack web development",
+    "TypeScript",
+    "Astro",
+    "Smart contracts",
+    "Internet of Things",
+    "Rust",
+    "AI-assisted software development",
+    "Application security review"
+  ],
+  "resume": {
+    "summary": "I am a founder and engineer in Kozhikode, Kerala, running two software companies with my co-founders: Txtudio Coretech (since 2025) and Lofritex IT Solutions (since 2024). I work plan-first, direct AI coding agents and ask for file-and-line evidence in security reviews. I hold a B.Tech in Computer Science and Engineering from College of Engineering Vadakara, where I founded the IEEE Computer Society chapter.",
+    "projects": [
+      {
+        "name": "Blockchain-as-a-Service",
+        "year": 2023,
+        "line": "Final-year project: a SolidStart and TypeScript frontend for writing, compiling and deploying Solidity contracts, with interaction UIs generated from the ABI and scoped API keys.",
+        "href": "https://kirankrishnakumar.com/work/blockchain-as-a-service"
+      },
+      {
+        "name": "IoT fingerprint attendance",
+        "year": 2022,
+        "line": "ESP8266 firmware with a fingerprint sensor, reporting to an Express admin app on Firebase; deleting a student also removes their fingerprint from the device.",
+        "href": "https://kirankrishnakumar.com/work/iot-fingerprint-attendance"
+      },
+      {
+        "name": "Travelian",
+        "year": 2022,
+        "line": "Travel review platform built on the well-known YelpCamp course architecture, then extended with an admin dashboard, rating model, profile page and admin CLI.",
+        "href": "https://kirankrishnakumar.com/work/travelian"
+      },
+      {
+        "name": "iNSiGHT",
+        "year": 2023,
+        "line": "Civic-transparency dApp built in about eight hours with SolidStart, web3.js and MetaMask; won a hackathon at CAPE Fest.",
+        "href": "https://kirankrishnakumar.com/work/insight-hackathon-dapp"
+      },
+      {
+        "name": "Rust Sass watcher",
+        "year": 2024,
+        "line": "A small Rust binary that watches a folder and compiles SCSS to compressed CSS with grass and notify, skipping partials.",
+        "href": "https://github.com/kirankrish792/sass-rust-compiler"
+      }
+    ]
+  }
+}

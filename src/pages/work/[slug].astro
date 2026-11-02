@@ -1,0 +1,228 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import CaseStudyHeader from '~/components/CaseStudyHeader.astro';
+import ArticleAside from '~/components/ArticleAside.astro';
+import Logo from '~/components/Logo.astro';
+import { adjacentWork, workEntries } from '~/lib/content';
+import { articleNode, breadcrumbNode, IDS, sourceCodeNode } from '~/lib/schema';
+
+export async function getStaticPaths() {
+  const entries = await workEntries();
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const path = `/work/${entry.id}`;
+const { Content, headings } = await render(entry);
+const brand = entry.id === 'txtudio' || entry.id === 'lofritex' ? entry.id : null;
+const repo = d.repo;
+const outLinks = repo && !d.links.some((l) => l.href.replace(/\/+$/, '') === repo.replace(/\/+$/, '')) ? [...d.links, { label: 'Source code', href: repo }] : d.links;
+const { prev, next } = await adjacentWork(entry.id);
+
+/** The ledger's short name: the H1 before any colon ("Txtudio", "Travelian"). */
+const shortName = (w: CollectionEntry<'work'>) => w.data.h1.split(':')[0];
+
+const companyIds: Record<string, string> = { txtudio: IDS.txtudio, lofritex: IDS.lofritex };
+const companyId = companyIds[entry.id];
+/** Name for the code node, from the title: "Travelian: Full-Stack…" gives "Travelian". */
+const codeName = d.title.split(':')[0].replace(/\s+case study$/i, '').trim();
+
+const schema = [
+  articleNode({
+    path,
+    headline: d.h1,
+    description: d.description,
+    published: d.pubDate,
+    modified: d.updatedDate,
+    about: companyId ? [{ '@id': companyId }] : undefined,
+  }),
+  ...(d.repo ? [sourceCodeNode({ name: codeName, repo: d.repo, languages: d.stack, description: d.summary })] : []),
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'Work', path: '/work' },
+    { name: shortName(entry), path },
+  ]),
+];
+
+const pager: { entry: CollectionEntry<'work'>; label: string; rel: 'prev' | 'next' }[] = [];
+if (prev) pager.push({ entry: prev, label: 'Previous case study', rel: 'prev' });
+if (next) pager.push({ entry: next, label: 'Next case study', rel: 'next' });
+---
+
+<Base title={d.title} description={d.description} type="article" published={d.pubDate} modified={d.updatedDate} schema={schema} page="case-study">
+  <article aria-labelledby="cs-title">
+    <CaseStudyHeader entry={entry} id="cs-title" />
+
+    <div class="section cs-body">
+      <div class="container article-grid">
+        <div id="cs-body">
+          <div class="prose cs-prose">
+            <Content />
+          </div>
+          {
+            d.credits && (
+              <p class="cs-credits">
+                <span class="cs-credits__label">Credits:</span>{' '}{d.credits}
+              </p>
+            )
+          }
+        </div>
+        <ArticleAside headings={headings} target="#cs-body">
+          <div class="aside-card">
+            {brand && <Logo company={brand} brand class="aside-card__logo" />}
+            <p class="label">Role</p>
+            <p class="aside-card__value">{d.role}</p>
+            {d.stack.length > 0 && (
+              <>
+                <p class="label">Stack</p>
+                <ul class="aside-card__chips">
+                  {d.stack.map((s) => (
+                    <li>{s}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {outLinks.length > 0 && (
+              <>
+                <p class="label">Links</p>
+                <ul class="aside-card__links">
+                  {outLinks.map((l) => (
+                    <li>
+                      <a href={l.href} class="link-draw">
+                        {l.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+          {next && (
+            <a class="aside-next" href={`/work/${next.id}`} data-cursor="Next">
+              <span class="label">Next case study</span>
+              <span class="aside-next__name">{shortName(next)}</span>
+            </a>
+          )}
+        </ArticleAside>
+      </div>
+    </div>
+  </article>
+
+  <nav class="cs-nav" aria-label="Case studies" data-print-hide>
+    <div class="container">
+      {
+        pager.length > 0 && (
+          <ul class="cs-nav__list" role="list">
+            {pager.map((p) => (
+              <li class="cs-nav__item">
+                <a class="cs-nav__link" href={`/work/${p.entry.id}`} rel={p.rel}>
+                  <span class="cs-nav__label">{p.label}</span>
+                  <span class="cs-nav__name">{shortName(p.entry)}</span>
+                  <span class="cs-nav__summary">{p.entry.data.summary}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      <p class="cs-nav__back">
+        <a href="/work">Back to Work</a>
+      </p>
+    </div>
+  </nav>
+</Base>
+
+<style>
+  .cs-body {
+    padding-top: var(--space-8);
+  }
+
+  /* Phones: a wide table scrolls inside its own box instead of being clipped by the page. */
+  @media (max-width: 40rem) {
+    .cs-prose :global(table) {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+
+  .cs-credits {
+    max-width: var(--measure);
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--rule);
+    color: var(--fg-soft);
+  }
+
+  .cs-credits__label {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .cs-nav {
+    padding-bottom: var(--space-9);
+  }
+
+  .cs-nav__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule-strong);
+  }
+
+  .cs-nav__item {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .cs-nav__link {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: var(--space-2) var(--space-5);
+    align-items: baseline;
+    padding: var(--space-5) 0;
+    text-decoration: none;
+    font-stretch: var(--wdth-ledger);
+  }
+
+  .cs-nav__label {
+    color: var(--fg-faint);
+  }
+
+  .cs-nav__name {
+    font-size: var(--step-1);
+    font-weight: 500;
+  }
+
+  .cs-nav__summary {
+    color: var(--fg-soft);
+  }
+
+  .cs-nav__link:hover .cs-nav__name,
+  .cs-nav__link:focus-visible .cs-nav__name {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.25em;
+  }
+
+  .cs-nav__back {
+    margin-top: var(--space-6);
+  }
+
+  .cs-nav__back a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  @media (max-width: 56rem) {
+    .cs-nav__link {
+      grid-template-columns: minmax(0, 1fr);
+      padding: var(--space-4) 0;
+    }
+  }
+</style>

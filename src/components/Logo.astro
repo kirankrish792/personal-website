@@ -1,0 +1,67 @@
+---
+/**
+ * The companies' own logos, inlined so they take the surrounding text colour (or their brand colour).
+ *
+ *   <Logo company="txtudio" />                       wordmark in the current text colour
+ *   <Logo company="lofritex" variant="mark" brand />  feather mark in Lofritex blue
+ *
+ * Sources: txtudio.com (favicon mark; wordmark traced from its header image) and lofritex.com (SVGs).
+ * Decorative by default; pass `label` when the logo stands in for the company's name.
+ */
+import txtudioWordmark from '~/assets/logos/txtudio-wordmark.svg?raw';
+import txtudioMark from '~/assets/logos/txtudio-mark.svg?raw';
+import lofritexWordmark from '~/assets/logos/lofritex-wordmark.svg?raw';
+import lofritexMark from '~/assets/logos/lofritex-mark.svg?raw';
+
+export type Company = 'txtudio' | 'lofritex';
+
+interface Props {
+  company: Company;
+  variant?: 'wordmark' | 'mark';
+  /** Use the company's brand colour instead of the text colour. */
+  brand?: boolean;
+  label?: string;
+  class?: string;
+}
+
+const { company, variant = 'wordmark', brand = false, label, class: className } = Astro.props;
+const svgs = {
+  txtudio: { wordmark: txtudioWordmark, mark: txtudioMark },
+  lofritex: { wordmark: lofritexWordmark, mark: lofritexMark },
+};
+const BRAND = { txtudio: '#0d1738', lofritex: '#0b83ba' };
+// Strip the file's own role and label: the wrapper carries the accessible name, or hides the logo.
+const svg = svgs[company][variant].replace(/\s(role|aria-label)="[^"]*"/g, ' aria-hidden="true" focusable="false"');
+---
+
+<span
+  class:list={['logo', `logo--${variant}`, className]}
+  style={brand ? `color:${BRAND[company]}` : undefined}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  set:html={svg}
+/>
+
+<style>
+  .logo {
+    display: inline-block;
+    line-height: 0;
+    vertical-align: middle;
+  }
+
+  .logo :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .logo--mark {
+    width: 1em;
+  }
+
+  .logo--mark :global(svg) {
+    height: 1em;
+    width: auto;
+  }
+</style>

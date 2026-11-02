@@ -1,0 +1,368 @@
+---
+/**
+ * The companies on Home, one cinematic scene each, told with their own logos. While a scene is
+ * pinned, scrolling irises a brand panel open (navy for Txtudio, white for Lofritex) with the mark
+ * settling at its centre, wipes the company's wordmark across the stage in its brand colour and
+ * slides the details in; at the end the scene drifts away for the next one (src/motion/companies.ts).
+ * Hovering or focusing a product swaps the panel's caption ([data-co-show] → [data-co-caption]).
+ *
+ * Without motion (reduced, paused, or no JavaScript) the scenes are plain, fully visible blocks.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Logo, { type Company } from '~/components/Logo.astro';
+import { shortName, yearLabel } from '~/lib/content';
+
+interface Props {
+  entries: CollectionEntry<'work'>[];
+}
+const { entries } = Astro.props;
+const companies = entries.filter((e) => e.data.kind === 'company').sort((a, b) => a.data.order - b.data.order);
+
+/** Brand looks and what each company makes or has made (facts from the case studies). */
+const brands: Record<string, { site: string; panel: string; ink: string; word: string; heading: string; items: { label: string; note: string }[] }> = {
+  txtudio: {
+    site: 'txtudio.com',
+    panel: '#0d1738',
+    ink: '#ffffff',
+    word: '#0d1738',
+    heading: 'Products',
+    items: [
+      { label: 'Workeron', note: 'Business suite: HR, CRM, projects, marketing' },
+      { label: 'Snaptiqz', note: 'Events and ticketing' },
+      { label: 'DoYourDesign', note: 'Interior design studios' },
+      { label: 'Audit Management', note: 'Internal audit for banks' },
+    ],
+  },
+  lofritex: {
+    site: 'lofritex.com',
+    panel: '#ffffff',
+    ink: '#0b83ba',
+    word: '#0b83ba',
+    heading: 'Product and client work',
+    items: [
+      { label: 'Manage Matey', note: 'ERP product' },
+      { label: 'Mitee Interiors', note: 'Client website, built in Astro' },
+      { label: 'Custom software', note: 'ERP, payroll, inventory, web and mobile' },
+    ],
+  },
+};
+---
+
+<section class="companies" aria-labelledby="companies-title" id="companies">
+  <header class="container companies__head">
+    <h2 id="companies-title" class="label">Companies I lead</h2>
+    <p class="companies__count numeral" aria-hidden="true">{String(companies.length).padStart(2, '0')}</p>
+  </header>
+
+  {
+    companies.map((c, ci) => {
+      const name = shortName(c);
+      const b = brands[c.id];
+      const company = c.id as Company;
+      return (
+        <article class="co" data-company aria-labelledby={`co-${c.id}`} style={b ? `--panel:${b.panel};--ink:${b.ink};--word:${b.word}` : undefined}>
+          <div class="co__stage">
+            <p class="co__index numeral" aria-hidden="true">
+              {String(ci + 1).padStart(2, '0')}
+            </p>
+
+            <div class="co__meta" data-co-meta>
+              <p class="label">
+                {c.data.role}, {yearLabel(c)}
+              </p>
+              <p class="co__summary">{c.data.summary}</p>
+              {b && (
+                <div class="co__extra">
+                  <p class="label">{b.heading}</p>
+                  <ul class="co__list">
+                    {b.items.map((i) => (
+                      <li>
+                        <a href={`/work/${c.id}`} class="co__item" data-co-show={`${i.label}|${i.note}`}>
+                          <span class="co__item-name">{i.label}</span>
+                          <span class="co__item-note">{i.note}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <a href={`/work/${c.id}`} class="link-draw co__more">
+                Read the {name} case study
+              </a>
+            </div>
+
+            <div class="co__panel-wrap" data-tilt>
+              <a class="co__panel" href={`/work/${c.id}`} data-co-panel data-cursor="Open" tabindex="-1" aria-hidden="true">
+                <span class="co__mark" data-co-mark>
+                  <Logo company={company} variant="mark" />
+                </span>
+                <span class="co__caption" aria-hidden="true">
+                  <span class="co__caption-name" data-co-caption-name>
+                    {name}
+                  </span>
+                  <span class="co__caption-note" data-co-caption-note data-default={b?.site}>
+                    {b?.site}
+                  </span>
+                </span>
+              </a>
+            </div>
+
+            <h3 id={`co-${c.id}`} class="co__name" data-co-name>
+              <Logo company={company} label={name} class="co__wordmark" />
+            </h3>
+          </div>
+        </article>
+      );
+    })
+  }
+</section>
+
+<style>
+  .companies {
+    position: relative;
+    padding-top: var(--space-9);
+  }
+
+  .companies__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--fg);
+    padding-bottom: var(--space-3);
+  }
+
+  .companies__count {
+    font-size: clamp(3rem, 6vw, 5rem);
+    line-height: 0.8;
+    color: var(--fg);
+  }
+
+  /* ---------- One scene per company ---------- */
+  .co {
+    position: relative;
+    height: 240svh;
+  }
+
+  .co__stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: 1fr auto;
+    gap: var(--space-5) var(--space-8);
+    padding: calc(var(--bar) + var(--space-6)) var(--gutter) var(--space-6);
+  }
+
+  .co__index {
+    position: absolute;
+    top: calc(var(--bar) + var(--space-4));
+    left: var(--gutter);
+    font-size: clamp(5rem, 11vw, 10rem);
+    line-height: 0.8;
+    /* Outlined, so it reads as a quiet backdrop without failing contrast as pale text would. */
+    color: transparent;
+    -webkit-text-stroke: 1px #8f8f8f;
+  }
+
+  .co__meta {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    position: relative;
+    z-index: 3;
+    display: grid;
+    gap: var(--space-4);
+    max-width: 28rem;
+    padding-top: var(--space-9);
+  }
+
+  .co__summary {
+    font-size: var(--step-1);
+    line-height: 1.4;
+  }
+
+  .co__list {
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .co__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    transition:
+      padding 0.4s var(--ease-out),
+      color 0.3s;
+  }
+
+  .co__item-name {
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+
+  .co__item-note {
+    font-size: var(--step--1);
+    color: var(--fg-soft);
+    text-align: right;
+  }
+
+  .co__item:hover,
+  .co__item:focus-visible,
+  .co__item[data-active] {
+    padding-left: var(--space-3);
+    color: var(--coral-ink);
+  }
+
+  .co__more {
+    justify-self: start;
+    font-weight: 500;
+  }
+
+  /* ---------- Brand panel ---------- */
+  .co__panel-wrap {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 34rem);
+    perspective: 1400px;
+  }
+
+  .co__panel {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border: 1px solid var(--fg);
+    background: var(--panel);
+    color: var(--ink);
+    text-decoration: none;
+    box-shadow: 0 60px 90px -60px rgb(0 0 0 / 0.55);
+    overflow: hidden;
+  }
+
+  .co__mark {
+    font-size: clamp(7rem, 16vw, 15rem);
+    line-height: 0;
+    transition: transform 0.9s var(--ease-out);
+  }
+
+  .co__panel:hover .co__mark {
+    transform: scale(1.06) rotate(-4deg);
+  }
+
+  :global(html.js-motion) .co__mark :global(.logo) {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    50% {
+      transform: translateY(-4%);
+    }
+  }
+
+  .co__caption {
+    position: absolute;
+    left: var(--space-5);
+    right: var(--space-5);
+    bottom: var(--space-5);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-3);
+    font-size: var(--step--1);
+    /* A shade deeper than the brand ink so small text keeps its contrast on the panel. */
+    color: color-mix(in srgb, var(--ink) 82%, black);
+  }
+
+  .co__caption-name {
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .co__caption-name,
+  .co__caption-note {
+    transition:
+      opacity 0.3s,
+      transform 0.5s var(--ease-out);
+  }
+
+  .co__caption[data-swapping] .co__caption-name,
+  .co__caption[data-swapping] .co__caption-note {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  /* ---------- Wordmark across the stage ---------- */
+  .co__name {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    position: relative;
+    z-index: 2;
+    align-self: end;
+    margin: 0;
+    color: var(--word);
+    pointer-events: none;
+  }
+
+  .co__name :global(.co__wordmark) {
+    width: min(78vw, 70rem);
+  }
+
+  @media (max-width: 56rem) {
+    .co {
+      height: auto;
+    }
+
+    .co__stage {
+      position: static;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      padding-block: var(--space-8);
+    }
+
+    .co__index {
+      position: static;
+      font-size: 4rem;
+    }
+
+    .co__name {
+      order: -1;
+    }
+
+    .co__name :global(.co__wordmark) {
+      width: 80vw;
+    }
+
+    .co__panel-wrap {
+      width: min(100%, 22rem);
+    }
+
+    .co__meta {
+      padding-top: 0;
+      max-width: none;
+    }
+  }
+
+  /* Without motion the scenes are ordinary blocks. */
+  :global(html:not(.js-motion)) .co {
+    height: auto;
+  }
+
+  :global(html:not(.js-motion)) .co__stage {
+    position: static;
+    height: auto;
+    min-height: 100svh;
+  }
+</style>

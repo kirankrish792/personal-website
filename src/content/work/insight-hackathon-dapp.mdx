@@ -1,0 +1,78 @@
+---
+title: "iNSiGHT: Civic Transparency dApp in Eight Hours"
+h1: "iNSiGHT"
+description: "A civic-transparency dApp that puts public donations and government transactions on-chain with web3.js and MetaMask. It won a hackathon at CAPE Fest."
+summary: "Hackathon-winning dApp that puts public donations and government transactions on-chain."
+kind: project
+year: 2023
+yearEnd: 2023
+role: "Developer, hackathon entry"
+stack:
+  - "SolidStart"
+  - "TypeScript"
+  - "Tailwind CSS"
+  - "web3.js"
+  - "MetaMask"
+outcome: "Won a hackathon at CAPE Fest."
+order: 6
+links:
+  - label: "Source on GitHub"
+    href: "https://github.com/kirankrish792/saastra-hackathon"
+repo: "https://github.com/kirankrish792/saastra-hackathon"
+needsConfirmation:
+  - "Team members and who built which part"
+  - "Official event name and date (the repository is named saastra-hackathon), and the prize or category won"
+  - "Who wrote the smart contracts (only their ABIs are in the repository)"
+  - "Blockchain network used for the demo"
+  - "Screenshots of the donations and government transactions pages"
+pubDate: 2026-10-31
+---
+
+## At a glance
+
+iNSiGHT is a civic-transparency decentralised app (dApp) that won a hackathon at CAPE Fest. It puts public donations and government transactions on a blockchain, so the record can be inspected rather than taken on trust. In May 2023, its SolidStart, web3.js and MetaMask frontend went from new repository to last push in about eight hours.
+
+## The problem
+
+Public money is hard to follow. Donations flow into funds, spending flows out, and the public sees only what someone chooses to publish.
+
+The app, titled "iNSiGHT, for people", describes itself as a blockchain-based system for government transactions, aimed at eradicating corruption. Its answer is a record that is public by design, with the amounts kept on-chain rather than in a private database.
+
+## On-chain design
+
+Two contracts sit behind the interface. The frontend reaches them through their ABIs, `donation.json` and `transaction.json`.
+
+| Contract | What the frontend uses | Purpose |
+|---|---|---|
+| Donations | `donate()`, `withdraw()`, `totalDonations()`, `government()` | Collects public donations and keeps a running total |
+| Government transactions | Read by the government transactions page | A ledger of government transactions |
+
+`donate()` is payable, so the money travels with the call itself. `totalDonations()` returns the running total, and `government()` returns the address of the government account that owns the contract. `withdraw()` takes the collected funds out.
+
+The point is where the number comes from. The total on the page is read from the contract, not from a database that the organisers control.
+
+## The wallet flow
+
+1. The app connects to MetaMask through `window.ethereum`, requesting accounts with `eth_requestAccounts`.
+2. The donor enters an amount, and web3.js converts it to wei with `toWei`.
+3. `donate()` goes out as a payable transaction, which MetaMask asks the donor to confirm.
+4. The donations page polls `totalDonations()` every second, so the total updates without a reload.
+
+## Eight hours, start to finish
+
+The repository was created at 21:58 UTC on 4 May 2023, which was 03:28 on 5 May in India. The last push came at 06:19 UTC, or 11:49 IST, about eight hours later. iNSiGHT went on to win a hackathon at CAPE Fest.
+
+## Trade-offs under time pressure
+
+- **Polling over events.** Polling `totalDonations()` every second needs no event plumbing, at the cost of one call per second for every open page.
+- **A stack already in use.** SolidStart, TypeScript and Tailwind CSS were also the stack of my final-year project, which was in progress in the same weeks. In a time box, familiar tools are a feature.
+- **Two flows and nothing more.** The app has donations and government transactions, plus a home page and an about page.
+- **Documentation last.** The README is still the SolidStart template.
+
+## What I would build next
+
+- **Events instead of polling.** The contract would emit an event per donation and the page would subscribe, so the total moves with new blocks rather than a timer.
+- **Clear wallet states.** No wallet installed, wrong network and rejected transaction would each get their own message.
+- **A public demo on a named test network.** The README would name the network and the contract address, so anyone could check the totals on a block explorer.
+
+In the same weeks I was working on my final-year project, [Blockchain-as-a-Service](/work/blockchain-as-a-service), a platform for deploying and calling smart contracts from a web form. More projects are on the [work page](/work).

@@ -1,0 +1,210 @@
+---
+/**
+ * Case-study header: the H1 (rises in), the outcome line, a facts list and, on the right,
+ * the entry's cover on a tilted card that leans toward the pointer.
+ *
+ *   <CaseStudyHeader entry={entry} />
+ *
+ * On narrow screens the card moves above the title.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import Logo from '~/components/Logo.astro';
+import Meta from '~/components/Meta.astro';
+import { yearLabel } from '~/lib/content';
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+  /** id of the H1, for aria-labelledby on the surrounding article. */
+  id?: string;
+}
+
+const { entry, id = 'cs-title' } = Astro.props;
+const d = entry.data;
+
+/** The repository gets its own "Source code" link unless one of the entry's links already points to it. */
+const sameUrl = (a: string, b: string) => a.replace(/\/+$/, '').toLowerCase() === b.replace(/\/+$/, '').toLowerCase();
+const repo = d.repo;
+const links = repo && !d.links.some((l) => sameUrl(l.href, repo)) ? [...d.links, { label: 'Source code', href: repo }] : d.links;
+
+const covers = import.meta.glob<{ default: ImageMetadata }>('/src/assets/work/*.jpg', { eager: true });
+const cover = covers[`/src/assets/work/${entry.id}.jpg`]?.default;
+/** The companies show their own brand (colour, mark and wordmark) instead of a screenshot. */
+const brand = entry.id === 'txtudio' || entry.id === 'lofritex' ? entry.id : null;
+
+const facts = [
+  { label: d.kind === 'company' ? 'Years' : 'Year', value: yearLabel(entry) },
+  { label: 'Role', value: d.role },
+  { label: 'Stack', value: d.stack },
+  { label: 'Links', links },
+];
+---
+
+<header class="page-head cs-head">
+  <div class="container cs-head__grid">
+    <div class="cs-head__text">
+      <p class="label cs-head__kind">{d.kind === 'company' ? 'Company' : 'Project'}, {yearLabel(entry)}</p>
+      <h1 id={id} class="cs-head__title" data-rise>{d.h1}</h1>
+      {d.outcome && <p class="cs-head__outcome" data-rise="late">{d.outcome}</p>}
+      <div class="cs-head__facts" data-reveal>
+        <Meta items={facts} label="Case study facts" />
+      </div>
+    </div>
+    {
+      brand ? (
+        <div class="cs-head__visual" aria-hidden="true">
+          <div class={`cs-head__card cs-head__brand cs-head__brand--${brand}`} data-tilt>
+            <span class="cs-head__brand-mark">
+              <Logo company={brand} variant="mark" />
+            </span>
+            <Logo company={brand} class="cs-head__brand-word" />
+          </div>
+        </div>
+      ) : cover && (
+        <div class="cs-head__visual" aria-hidden="true">
+          <div class="cs-head__card" data-tilt>
+            <Image src={cover} alt="" widths={[480, 800, 1100]} sizes="(min-width: 56rem) 40vw, 92vw" loading="eager" />
+          </div>
+        </div>
+      )
+    }
+  </div>
+</header>
+
+<style>
+  .cs-head__brand {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: var(--space-5);
+  }
+
+  .cs-head__card.cs-head__brand--txtudio {
+    background: #0d1738;
+    color: #ffffff;
+  }
+
+  .cs-head__card.cs-head__brand--lofritex {
+    background: #ffffff;
+    color: #0b83ba;
+  }
+
+  .cs-head__brand-mark {
+    font-size: clamp(4rem, 8vw, 7rem);
+    line-height: 0;
+  }
+
+  :global(html.js-motion) .cs-head__brand-mark :global(.logo) {
+    animation: brand-float 6s ease-in-out infinite;
+  }
+
+  @keyframes brand-float {
+    50% {
+      transform: translateY(-6%) rotate(-3deg);
+    }
+  }
+
+  .cs-head__brand :global(.cs-head__brand-word) {
+    width: 46%;
+  }
+
+  .cs-head__grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--space-5);
+    align-items: center;
+  }
+
+  .cs-head__text {
+    grid-column: 1 / span 7;
+  }
+
+  /* Case-study titles are sentences, so they top out one step below the other page titles. */
+  .cs-head__title {
+    font-size: clamp(var(--step-4), 4.8vw, var(--step-5));
+  }
+
+  .cs-head__outcome {
+    max-width: 40rem;
+    margin-top: var(--space-5);
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--fg-soft);
+  }
+
+  .cs-head__facts {
+    max-width: 40rem;
+    margin-top: var(--space-7);
+  }
+
+  /* Each link in the facts list stands alone, so it gets a 44 px target. The links wrap as a row of
+     targets (no indent on the next line), and every label lines up with the first line of its value. */
+  .cs-head__facts :global(.meta .meta__row) {
+    align-items: baseline;
+  }
+
+  .cs-head__facts :global(.meta .meta__row dd) {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-4);
+  }
+
+  .cs-head__facts :global(.meta .meta__row dd a) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-left: 0;
+  }
+
+  .cs-head__kind {
+    margin-bottom: var(--space-3);
+  }
+
+  .cs-head__visual {
+    grid-column: 8 / span 5;
+    perspective: 1200px;
+  }
+
+  .cs-head__card {
+    aspect-ratio: 16 / 10;
+    border: 1px solid var(--fg);
+    background: var(--bg-raised);
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.4);
+    rotate: 4deg;
+    transition: rotate 0.8s var(--ease-out);
+    will-change: transform;
+  }
+
+  .cs-head__card:hover {
+    rotate: 0deg;
+  }
+
+  .cs-head__card :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 56rem) {
+    .cs-head__text,
+    .cs-head__visual {
+      grid-column: 1 / -1;
+    }
+
+    .cs-head__visual {
+      order: -1;
+      margin-bottom: var(--space-6);
+    }
+  }
+
+  /* On paper the frame would be an empty box (the particle layer never prints). */
+  @media print {
+    .cs-head__text {
+      grid-column: 1 / -1;
+    }
+
+    .cs-head__visual {
+      display: none !important;
+    }
+  }
+</style>

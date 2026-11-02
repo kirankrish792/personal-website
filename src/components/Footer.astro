@@ -1,0 +1,239 @@
+---
+import Logo from '~/components/Logo.astro';
+import { SITE } from '~/site.config';
+const year = new Date().getFullYear();
+/** "Let's talk" as letters for the hover roll; spaces stay as fixed-width gaps. */
+const talk = [..."Let's talk"];
+const marquee = ['txtudio', 'lofritex', 'Workeron', 'Snaptiqz', 'DoYourDesign', 'Audit Management Solution', 'Manage Matey ERP', 'Kozhikode, Kerala'];
+---
+
+<footer class="footer">
+  <div class="footer__marquee marquee" aria-hidden="true">
+    <div class="marquee__track">
+      {[...marquee, ...marquee].map((m) => (
+        <span class="footer__item">
+          {m === 'txtudio' || m === 'lofritex' ? <Logo company={m} class="footer__logo" /> : m}
+          <span class="footer__star">✳&#xFE0E;</span>
+        </span>
+      ))}
+    </div>
+  </div>
+  <div class="container footer__inner">
+    <div class="footer__ask">
+      <p class="label">Have a project, a partnership or a talk in mind?</p>
+      <a class="footer__big display" href="/contact" data-cursor="Write">
+        <span class="visually-hidden">Let's talk</span>
+        <span class="footer__roll" aria-hidden="true">
+          {talk.map((ch, i) =>
+            ch === ' ' ? (
+              <span class="footer__gap" />
+            ) : (
+              <span class="footer__ch" style={`--i:${i}`}>
+                <span>{ch}</span>
+                <span>{ch}</span>
+              </span>
+            ),
+          )}
+        </span>
+        <span class="footer__badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9" /></svg>
+        </span>
+      </a>
+    </div>
+    <div class="footer__cols">
+      <div>
+        <p class="label">Pages</p>
+        <ul>
+          <li><a href="/work" class="link-draw">Work</a></li>
+          <li><a href="/about" class="link-draw">About</a></li>
+          <li><a href="/writing" class="link-draw">Writing</a></li>
+          <li><a href="/lab" class="link-draw">Lab</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="label">Elsewhere</p>
+        <ul>
+          {SITE.socials.map((s) => <li><a href={s.href} rel="me noopener" class="link-draw">{s.label}</a></li>)}
+          <li><a href="/rss.xml" class="link-draw">RSS</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="label">Small print</p>
+        <ul>
+          <li><a href="/privacy" class="link-draw">Privacy</a></li>
+          <li><a href="/resume" class="link-draw">Résumé</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer__name" data-wave>Kiran Krishnakumar Subhashini</p>
+    <p class="footer__note label">No cookies. Built in Kozhikode. &copy; {year}</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--fg);
+    padding-bottom: var(--space-6);
+    overflow: hidden;
+  }
+
+  .footer__marquee {
+    padding-block: var(--space-4);
+    border-bottom: 1px solid var(--rule);
+    font-size: var(--step-1);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .footer__item :global(.footer__logo) {
+    width: 7.5em;
+  }
+
+  .footer__item {
+    display: inline-flex;
+    gap: var(--space-7);
+    align-items: center;
+  }
+
+  .footer__star {
+    color: var(--coral);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-variant-emoji: text;
+  }
+
+  .footer__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: var(--space-7);
+    padding-top: var(--space-8);
+  }
+
+  /* The type is sized to this column, not the viewport, so the words and the badge always fit
+     beside the link columns instead of spilling over them (about 6.4em wide in all). */
+  .footer__ask {
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  /* Hover never changes the link's size (resizing made it reflow under the cursor and flicker).
+     Instead each letter rolls up in turn, replaced from below by a deeper coral copy, and a round
+     arrow badge springs in beside the words. */
+  .footer__big {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.12em;
+    margin-top: var(--space-3);
+    font-size: clamp(2.5rem, 15cqi, 9rem);
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .footer__roll {
+    display: inline-flex;
+    line-height: 1;
+  }
+
+  .footer__gap {
+    width: 0.26em;
+  }
+
+  .footer__ch {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    height: 1em;
+    overflow: clip;
+    padding-bottom: 0.04em;
+    box-sizing: content-box;
+  }
+
+  .footer__ch > span {
+    display: block;
+    height: 1em;
+    line-height: 1;
+    transition: transform 0.6s var(--ease-out);
+    transition-delay: calc(var(--i) * 28ms);
+  }
+
+  .footer__ch > span:last-child {
+    color: var(--coral-ink);
+  }
+
+  .footer__big:hover .footer__ch > span,
+  .footer__big:focus-visible .footer__ch > span {
+    transform: translateY(-100%);
+  }
+
+  .footer__badge {
+    display: grid;
+    place-items: center;
+    width: 0.62em;
+    height: 0.62em;
+    margin-left: 0.12em;
+    border-radius: 50%;
+    background: var(--coral);
+    color: var(--bg);
+    transform: scale(0) rotate(-90deg);
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .footer__badge svg {
+    width: 46%;
+    height: 46%;
+    transition: transform 0.5s var(--ease-out);
+  }
+
+  .footer__big:hover .footer__badge,
+  .footer__big:focus-visible .footer__badge {
+    transform: scale(1) rotate(0deg);
+    transition-delay: 0.12s;
+  }
+
+  .footer__badge:hover svg {
+    transform: translate(12%, -12%);
+  }
+
+  /* Touch screens have no hover: show the badge at rest so the invitation is still clear. */
+  @media (hover: none) {
+    .footer__badge {
+      transform: scale(0.8);
+    }
+  }
+
+  .footer__cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+
+  .footer__cols ul {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .footer__name {
+    grid-column: 1 / -1;
+    font-size: clamp(1.6rem, 5.4vw, 5rem);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-top: var(--space-6);
+  }
+
+  .footer__note {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 56rem) {
+    .footer__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

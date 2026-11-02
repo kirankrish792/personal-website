@@ -1,0 +1,110 @@
+---
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import PostList from '~/components/PostList.astro';
+import type { PostRow } from '~/components/PostList.astro';
+import { page, posts, readingMinutes } from '~/lib/content';
+import { IDS, breadcrumbNode } from '~/lib/schema';
+import { SITE } from '~/site.config';
+
+const writing = await page('writing');
+const d = writing.data;
+const list = await posts();
+const path = '/writing';
+const url = `${SITE.url}${path}`;
+const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+
+const postRows: PostRow[] = list.map((p) => ({
+  title: p.data.title,
+  href: `${path}/${p.id}`,
+  date: p.data.pubDate,
+  summary: p.data.description,
+  note: `${readingMinutes(p.body)} min read`,
+}));
+
+const elsewhereRows: PostRow[] = (d.elsewhere ?? []).map((e) => ({
+  title: e.title,
+  href: e.href,
+  date: e.date,
+  summary: e.summary,
+  note: `Published by ${e.publisher}`,
+  external: true,
+}));
+
+const schema = [
+  {
+    '@type': 'Blog',
+    '@id': `${url}#blog`,
+    url,
+    name: d.title,
+    description: d.description,
+    inLanguage: SITE.locale,
+    author: { '@id': IDS.person },
+    publisher: { '@id': IDS.person },
+    isPartOf: { '@id': IDS.website },
+    ...(d.updated && { dateModified: isoDate(d.updated) }),
+    blogPost: list.map((p) => {
+      const postUrl = `${url}/${p.id}`;
+      return {
+        '@type': 'BlogPosting',
+        '@id': `${postUrl}#article`,
+        headline: p.data.title,
+        url: postUrl,
+        datePublished: isoDate(p.data.pubDate),
+      };
+    }),
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: d.h1, path },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} schema={schema} page="writing">
+  <PageHead h1={d.h1} lede={d.intro} />
+
+  {
+    postRows.length > 0 && (
+      <div class="container writing__posts" data-reveal>
+        <PostList rows={postRows} />
+      </div>
+    )
+  }
+
+  {
+    elsewhereRows.length > 0 && (
+      <section class="container writing__elsewhere" aria-labelledby="elsewhere" data-reveal>
+        <div class="ledger__head">
+          <h2 id="elsewhere">{d.elsewhereHeading ?? 'Elsewhere'}</h2>
+        </div>
+        <PostList rows={elsewhereRows} level="h3" />
+      </section>
+    )
+  }
+
+  {/* The feed is XML: the browser opens it directly, without the router's fetch or a hover prefetch. */}
+  <p class="container writing__feed">
+    <a href="/rss.xml" type="application/rss+xml" data-astro-reload data-astro-prefetch="false">Follow new posts by RSS</a>
+  </p>
+</Base>
+
+<style>
+  .writing__posts {
+    border-top: 1px solid var(--rule-strong);
+  }
+
+  .writing__elsewhere {
+    margin-top: var(--space-9);
+  }
+
+  .writing__feed {
+    padding-block: var(--space-7) var(--space-9);
+  }
+
+  .writing__feed a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+</style>

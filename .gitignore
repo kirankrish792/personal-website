@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+.env
+.env.*
+.playwright-mcp/
+test-results/
+playwright-report/
+.lighthouseci/
+.DS_Store
+graphify-out/
+# Private working notes, kept out of the public repository
+docs/private/

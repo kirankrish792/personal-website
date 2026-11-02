@@ -1,0 +1,281 @@
+---
+/**
+ * Site chrome, persisted across page swaps: the vertical name rail, the top bar
+ * (menu, motion toggle, live Kozhikode clock, inquiries) and the uppercase menu.
+ */
+import { NAV, SITE } from '~/site.config';
+import { routePath } from '~/lib/url';
+
+const current = routePath(Astro.url.pathname);
+const isCurrent = (href: string) => (href === '/' ? current === '/' : current === href || current.startsWith(`${href}/`));
+const contactHref = SITE.email ? `mailto:${SITE.email}` : '/contact';
+const contactText = SITE.email || 'Start a conversation';
+---
+
+<div class="chrome" transition:persist="chrome" data-nav>
+  <a class="rail" href="/" data-cursor="Home">
+    <span class="rail__logo">KIRAN K S<sup aria-hidden="true">©</sup><span class="visually-hidden">, home</span></span>
+    <span class="rail__meta" aria-hidden="true">copyright {new Date().getFullYear()}</span>
+    <span class="rail__meta" aria-hidden="true">kozhikode, in</span>
+  </a>
+
+  <header class="topbar">
+    <button class="topbar__menu" type="button" aria-expanded="false" aria-controls="nav-list" data-action="menu">
+      <span class="label">Menu</span>
+    </button>
+    <button type="button" class="topbar__motion" data-action="motion" aria-pressed="true">
+      <span class="label">Motion</span>
+      <span class="topbar__state" data-motion-state aria-hidden="true">On</span>
+      <span class="topbar__dash" aria-hidden="true"></span>
+    </button>
+    <p class="topbar__clock">
+      <span>Working from Kozhikode</span>
+      <span class="label"><span data-clock>IST</span></span>
+    </p>
+    <p class="topbar__ask">
+      <span class="label">For inquiries</span>
+      <a href={contactHref} class="link-draw" data-copy={SITE.email ? 'email' : undefined}>{contactText}</a>
+    </p>
+  </header>
+
+  <nav class="menu" aria-label="Main">
+    <ul id="nav-list" class="menu__list">
+      {
+        NAV.map((item) => (
+          <li>
+            <a href={item.href} data-nav-link aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              <span class="menu__arrow" aria-hidden="true">→</span>
+              <span data-roll>{item.label}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</div>
+
+<style>
+  .rail {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 40;
+    width: var(--rail);
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding-top: var(--space-5);
+    text-decoration: none;
+  }
+
+  .rail > span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .rail__logo {
+    font-weight: 700;
+    font-size: 1.55rem;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+
+  .rail:hover .rail__logo {
+    color: var(--coral-ink);
+  }
+
+  .rail__logo sup {
+    font-size: 0.45em;
+  }
+
+  .rail__meta {
+    font-size: 0.6875rem;
+    line-height: 1.1;
+    color: var(--fg);
+  }
+
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: var(--rail);
+    right: 0;
+    z-index: 40;
+    height: var(--bar);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: start;
+    gap: var(--space-5);
+    padding: var(--space-5) var(--gutter) 0;
+    pointer-events: none;
+  }
+
+  .topbar > * {
+    pointer-events: auto;
+  }
+
+  /* Once the page scrolls, a soft backdrop keeps the bar legible over content. */
+  .topbar::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -0.75rem;
+    z-index: -1;
+    background: linear-gradient(to bottom, var(--bg) 62%, transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+  }
+
+  :global(html[data-scrolled]) .topbar::before {
+    opacity: 1;
+  }
+
+  .topbar__menu,
+  .topbar__motion {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 2.25rem;
+    margin-top: -0.5rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    justify-self: start;
+  }
+
+  .topbar__state {
+    font-size: var(--step--1);
+    font-weight: 500;
+  }
+
+  .topbar__dash {
+    width: 0.9rem;
+    height: 1px;
+    background: currentColor;
+    transition: width 0.4s var(--ease-out);
+  }
+
+  .topbar__motion:hover .topbar__dash {
+    width: 1.6rem;
+  }
+
+  .topbar__clock,
+  .topbar__ask {
+    display: flex;
+    flex-direction: column;
+    font-size: var(--step--1);
+    line-height: 1.25;
+  }
+
+  .topbar__ask {
+    flex-direction: row;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+
+  .menu {
+    position: fixed;
+    top: calc(var(--space-5) + 2.4rem);
+    left: calc(var(--rail) + var(--gutter));
+    z-index: 39;
+    transition: transform 0.6s var(--ease-out), opacity 0.4s;
+  }
+
+  .menu__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .menu__list a {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: 1.375rem;
+    font-weight: 500;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    padding-block: 0.08em;
+  }
+
+  .menu__arrow {
+    display: inline-block;
+    width: 0;
+    overflow: hidden;
+    transition: width 0.45s var(--ease-out);
+  }
+
+  .menu__list a[aria-current='page'] .menu__arrow,
+  .menu__list a:hover .menu__arrow {
+    width: 1.1em;
+  }
+
+  /* An invisible bridge over the gap between Menu and the list, so moving down keeps the hover. */
+  .menu::before {
+    content: '';
+    position: absolute;
+    left: -1rem;
+    right: -1rem;
+    bottom: 100%;
+    height: 2.5rem;
+  }
+
+  /* Scrolled: the list tucks away until Menu is pressed or hovered. */
+  :global(html[data-scrolled]) .chrome:not([data-open]) .menu {
+    transform: translateY(-1rem);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .chrome[data-open] .menu {
+    transform: none;
+    opacity: 1;
+  }
+
+  @media (max-width: 56rem) {
+    .rail {
+      display: none;
+    }
+
+    .topbar {
+      grid-template-columns: auto 1fr auto;
+      background: var(--bg);
+      height: auto;
+      padding-bottom: var(--space-3);
+    }
+
+    .topbar__clock {
+      display: none;
+    }
+
+    .topbar__ask .label {
+      display: none;
+    }
+
+    .menu {
+      left: 0;
+      right: 0;
+      top: var(--bar);
+      padding: var(--space-6) var(--gutter);
+      background: var(--scrim);
+      min-height: calc(100dvh - var(--bar));
+      transform: translateY(-1rem);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .chrome[data-open] .menu {
+      pointer-events: auto;
+    }
+
+    .menu__list a {
+      font-size: clamp(2.2rem, 11vw, 3.4rem);
+    }
+  }
+</style>

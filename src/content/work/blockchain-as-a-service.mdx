@@ -1,0 +1,113 @@
+---
+title: "Blockchain-as-a-Service Platform Case Study"
+h1: "Deploy smart contracts from a web form"
+description: "How my final-year project turns Solidity into a deployed contract from a web form: compile, deploy, an ABI-generated interface and scoped API keys."
+summary: "Write, compile, deploy and call Solidity contracts in the browser, with scoped API keys."
+kind: project
+year: 2023
+yearEnd: 2023
+role: "Developer, final-year project"
+stack:
+  - "SolidStart"
+  - "TypeScript"
+  - "Tailwind CSS"
+  - "Monaco Editor"
+  - "Vite"
+  - "Solidity"
+outcome: "Final-year project: from Solidity source to a callable contract without leaving the browser."
+order: 3
+links:
+  - label: "Frontend source on GitHub"
+    href: "https://github.com/kirankrish792/main-project-frontend"
+repo: "https://github.com/kirankrish792/main-project-frontend"
+needsConfirmation:
+  - "Team members for the final-year project and who built which part"
+  - "Backend stack and repository (a LinkedIn snippet mentions web3.js; the backend is not public)"
+  - "Blockchain network or local chain the platform deployed to"
+  - "Screenshots of the editor, interaction and API key screens, or approval to use a flow diagram instead"
+pubDate: 2026-10-31
+---
+
+## At a glance
+
+Blockchain-as-a-Service was my final-year B.Tech project at College of Engineering Vadakara, Kerala, in 2023: a web platform for smart contracts. You write Solidity in the browser, compile and deploy it, then call it through an interface generated from its ABI. It also issues API keys scoped by role, permission and expiry.
+
+## The problem
+
+Shipping a smart contract usually starts with a toolchain. You need a compiler, a deployment script, a funded account and a connection to a node. Even then, most people cannot use the contract until someone builds a frontend for it.
+
+The aim of this project was to fold all of that into a web form. A web developer should be able to go from source code to a callable contract without installing anything.
+
+## How it works
+
+The flow has five steps. Every step after the first is a call from the SolidStart frontend to the backend.
+
+1. **Write.** You write a Solidity contract in Monaco, the editor component behind VS Code.
+2. **Compile.** The source goes to `/compile`, which returns the contract name, ABI, bytecode and any compiler warnings.
+3. **Deploy.** You enter the constructor arguments, and the backend deploys the contract through `/deploy`.
+4. **Interact.** The contract page loads the contract from `/contracts/:address` and builds an interface from its ABI. Every call goes through `/call`.
+5. **Issue keys.** `/api/v1/:account` issues API keys for your account, each with a role, a permission and an expiry.
+
+A contract list and a dashboard sit alongside the flow.
+
+## The key idea: the ABI is the interface
+
+When the Solidity compiler builds a contract, it also emits an ABI. The ABI is a JSON description of the contract's public functions: each one's name, typed inputs and outputs, and a `stateMutability` flag. A single entry looks like this hypothetical setter:
+
+```json
+{
+  "type": "function",
+  "name": "setPrice",
+  "stateMutability": "nonpayable",
+  "inputs": [{ "name": "newPrice", "type": "uint256" }],
+  "outputs": []
+}
+```
+
+The `stateMutability` flag says whether a function can change state. That is enough to decide which control to draw:
+
+| `stateMutability` | What the function does | What the interface draws |
+|---|---|---|
+| `view` | Reads contract state | A getter |
+| `pure` | Computes from its inputs alone | A getter |
+| `nonpayable` | Changes state | A setter with typed inputs |
+| `payable` | Changes state and can accept ether | A setter with typed inputs |
+
+So a newly deployed contract gets a usable interface without anyone writing frontend code for it. The ABI stops being a build artefact and becomes the interface itself.
+
+## The access model
+
+Each API key carries three settings:
+
+| Setting | Options |
+|---|---|
+| Role | Admin or User |
+| Permission | All, Read or Write |
+| Expiry | 30, 60 or 90 days |
+
+Expiry matters because keys leak, and a key that expires on its own limits how long a leaked one stays useful. Scoping matters for the same reason: an integration that only reads data should never hold a key that can write.
+
+## Stack
+
+- SolidStart 0.2 and SolidJS 1.6, written in TypeScript
+- Tailwind CSS 3 and Vite 4
+- Monaco Editor for Solidity editing
+- axios for calls to the backend, and pnpm for packages
+
+The backend that compiles, deploys and issues keys is not public on my GitHub account. The public repository holds the frontend.
+
+## Honest limits
+
+- **Half the system is public.** Without the backend, you can read the flow in the repository but not run it.
+- **Local only.** The frontend expects its backend at `localhost:9789`, so it runs locally rather than as a hosted service.
+- **No user wallet.** Deployments and calls are sent by the backend, not signed in the user's own wallet.
+- **No documentation.** The README is still the SolidStart template, so the repository does not explain itself.
+
+## What I would change
+
+1. **Client-side signing.** Users would sign deployments and state-changing calls in their own wallet, so the server never needs a key that can spend.
+2. **Hardened authentication.** Sessions and account checks would guard the dashboard and key issuing, and any key could be revoked before it expires.
+3. **Error handling that explains itself.** Compiler errors would appear on the line that caused them, and reverted calls would show their reason.
+4. **Configuration instead of hardcoded hosts.** The backend address would come from the environment, so one build runs locally or hosted.
+
+In the same weeks, the same SolidStart and Tailwind CSS stack went into [iNSiGHT](/work/insight-hackathon-dapp), a civic-transparency dApp that won a hackathon at CAPE Fest. More projects are on the [work page](/work), and you can [start a conversation](/contact) about any of them.

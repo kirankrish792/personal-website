@@ -1,0 +1,129 @@
+---
+title: "Fingerprint to Firebase: lessons in boundaries"
+description: "How a fingerprint sensor, an ESP8266, an Express app and Firebase made an IoT attendance system in 2022, and the trust boundaries I would draw today."
+pubDate: 2026-10-31
+pillar: engineering
+tags:
+  - "IoT"
+  - "ESP8266"
+  - "Firebase"
+  - "security"
+summary: "In 2022 I worked on an IoT fingerprint attendance system: an ESP8266 NodeMCU with a fingerprint sensor, an Express and EJS admin app, and Firebase. This walkthrough follows a fingerprint from sensor to dashboard. It then names the trust boundaries I would draw differently today: authenticated routes, authenticated devices and secrets kept out of source control."
+relatedWork: iot-fingerprint-attendance
+draft: false
+needsConfirmation:
+  - "Exact fingerprint sensor model: the firmware uses Adafruit's Fingerprint Sensor Library (^2.1.0); the module itself is not recorded."
+  - "Solo build or team project, and who did the firmware and the web app. The post says 'I worked on' and claims no sole authorship."
+  - "Firebase product: the code uses the firebase 9 and firebase-admin 11 SDKs with Firestore-style calls. The post says 'Firebase' only; confirm Cloud Firestore or the Realtime Database."
+  - "How fingerprints were enrolled on the device (not described in the post)."
+  - "Whether the device checked the server's delete requests: the post states only that the device had to accept them."
+  - "Whether the system was used beyond a prototype: the post claims no deployment."
+  - "The post does not link the Attendance-list repository. Clean it before any link is added here or in the case study."
+---
+
+Attendance sounds like a simple record: who was here, and when. In 2022 I worked on a system that captured it with a fingerprint sensor, an ESP8266 and a small web app. The code has 12 commits, made between June and September.
+
+How the parts fit together is the easy part to explain. The more useful part, looking back, is where trust crossed from one component to the next, and what checked it.
+
+## What were the parts?
+
+The system had four parts, each running something different.
+
+| Part | What it ran | Its job |
+|---|---|---|
+| Fingerprint sensor | A module driven by Adafruit's Fingerprint Sensor Library | Store fingerprint templates and match them |
+| Device | An ESP8266 on a NodeMCU v2 board, Arduino framework, built with PlatformIO | Read the sensor and talk to the server |
+| Server | Express with EJS templates, ejs-mate layouts and method-override | Admin pages and device endpoints |
+| Data | Firebase, through the Firebase client and Admin SDKs | Student records and attendance timestamps |
+
+One PlatformIO project file declared the platform, the board, the framework and the fingerprint library. The firmware came to about 13 KB of C++. The web app was about 14 KB of EJS templates and 7 KB of JavaScript.
+
+One dependency explains a design choice. HTML forms can only send GET and POST, so method-override let the admin page send the DELETE that removed a student.
+
+## How does a fingerprint become an attendance record?
+
+Fingerprint modules like this one store templates in their own memory and run the match on board. In the usual flow, the ESP8266 never handles an image, only the number of the slot that matched.
+
+1. **Match.** A finger on the sensor returns a slot number, which the code calls `Finger_id`.
+2. **Look up.** The device posts that ID to `/studentDetails`, and the server finds the matching student in Firebase.
+3. **Log.** The device posts to `/Attendance`, and the server records a timestamp for that student.
+4. **Review.** The admin pages, rendered on the server with EJS, show the student roster and each student's attendance timestamps.
+
+Two flows started in the admin pages instead. Adding a student created a record with a UUID. Deleting one removed the record and made the server call the device over the local network, to delete that fingerprint by its `Finger_id`.
+
+```text
+finger   -> sensor   -> ESP8266                     match, return a slot ID
+ESP8266  -> Express  -> Firebase   /studentDetails   find the student
+ESP8266  -> Express  -> Firebase   /Attendance       log a timestamp
+browser  -> Express  -> Firebase   DELETE student    remove the record
+Express  -> ESP8266  -> sensor     LAN request       delete the fingerprint
+```
+
+That last line matters most. It made the device a server as well as a client, so the system had more front doors than it first appeared to.
+
+## Where were the trust boundaries?
+
+A trust boundary is a line where data or commands pass to a part of the system that should not simply believe them. This system had five. I would keep one exactly as it was and draw the other four differently today.
+
+| Boundary | What crosses it | What I would require today |
+|---|---|---|
+| Sensor to device | A slot number | Keep it this way: templates stay on the sensor |
+| Device to server | Lookups and attendance posts | A credential for every device |
+| Browser to admin app | List, add and delete actions | A login, with actions scoped by role |
+| Server to device | Delete-fingerprint commands | Devices pull commands, so nothing listens |
+| Code to secrets | Credentials and keys | Secrets kept out of source control |
+
+### Sensor to device: the boundary the hardware drew
+
+The best boundary in the system came with the hardware. Templates stay on the sensor module and only a slot number crosses into the ESP8266, so the server only ever needed an ID.
+
+I would keep this exactly as it is. A fingerprint that never leaves the sensor cannot leak from a database.
+
+### Device to server: who may post attendance?
+
+The device called `/studentDetails` and `/Attendance` like any other client. The Express app had no authentication middleware, so anything that could reach it could post attendance for any `Finger_id`.
+
+Today every device would carry its own credential, and the server would check it on every request. A lost device then costs one revoked key, not trust in the whole system.
+
+### Browser to admin app: who may delete a student?
+
+The admin pages could list, add and delete students without asking who you were. An open admin page is safe only while nobody else can reach it. Here it also reached into the hardware, because deleting a student removed their fingerprint from the sensor.
+
+Today every admin route would sit behind a login, with actions scoped by role. Viewing a roster and deleting a student, fingerprint and all, are different powers. At Txtudio we wrote this down as one of [our four principles](/writing/one-year-of-txtudio): scoped by role.
+
+### Server to device: who may command the device?
+
+Deleting a student made the server call the device over the local network. That meant the ESP8266 had to accept requests, and anything that accepts requests needs to know who sent them.
+
+Today I would reverse the direction. The device would ask the server for pending changes on its own schedule, so it accepts no inbound connections at all. It also no longer needs an address that the server has to know.
+
+### Code to secrets: where do credentials live?
+
+A system like this holds real secrets: the server's Firebase Admin credentials and, in a better version, a key for every device. Today they would stay out of source control from the first commit.
+
+That means environment variables in development, a secret store in deployment and a `.gitignore` written before any code. Device keys belong in provisioning, not in firmware source.
+
+## How did the smart farming dashboard compare?
+
+In the same months I worked on a smart farming dashboard, with 24 commits between June and August 2022. An Express and EJS app read temperature, humidity, soil moisture and soil temperature feeds from the Adafruit IO REST API. It could also delete data points.
+
+Here a platform owned the device boundary. The sensor data landed in Adafruit IO first, so the dashboard never had to accept data straight from a device.
+
+Its lesson was about data quality instead. Before averaging, the dashboard skipped a sentinel value, 2147483647, which is the largest signed 32-bit integer.
+
+A sentinel means "no real reading", and a boundary is the right place to name it. Let it through, and one bad value quietly ruins an average.
+
+## What would I build differently today?
+
+Six rules, starting at the sensor:
+
+1. Keep biometric templates on the sensor and pass only IDs.
+2. Give every device its own credential, checked on every request.
+3. Have devices pull commands instead of listening for them.
+4. Put every admin route behind a login, with actions scoped by role.
+5. Keep secrets out of source control from the first commit.
+6. Log who changed what, because attendance is a record someone else will check.
+
+That last point is also one of Txtudio's principles: built to be audited. The [IoT fingerprint attendance case study](/work/iot-fingerprint-attendance) gives the short version of this project.
+
+I still review for boundaries, now in agent-written code too. Here is [how I plan those sessions](/writing/plan-first-agent-sessions).

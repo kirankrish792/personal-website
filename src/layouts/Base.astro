@@ -1,0 +1,75 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { Font } from 'astro:assets';
+import Seo from '~/components/Seo.astro';
+import JsonLd from '~/components/JsonLd.astro';
+import Nav from '~/components/Nav.astro';
+import Footer from '~/components/Footer.astro';
+import { SITE } from '~/site.config';
+import { baseGraph } from '~/lib/schema';
+import '~/styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  type?: 'website' | 'article' | 'profile';
+  noindex?: boolean;
+  published?: Date;
+  modified?: Date;
+  /** Extra JSON-LD nodes for this page; the person, companies and website are always included. */
+  schema?: Record<string, unknown>[];
+  /** Name of the page, set on <body data-page> for page-specific styles. */
+  page?: string;
+}
+
+const { title, description, type, noindex, published, modified, schema = [], page = 'page' } = Astro.props;
+const graph = [...baseGraph(), ...schema];
+const beacon = SITE.cfAnalyticsToken ? JSON.stringify({ token: SITE.cfAnalyticsToken, spa: true }) : '';
+---
+
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#ececec" data-theme-color />
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        var motion;
+        try {
+          motion = JSON.parse(localStorage.getItem('kks-prefs') || '{}').motion;
+        } catch (e) {}
+        var theme = 'light';
+        root.dataset.theme = theme;
+        root.dataset.motion = motion === 'paused' ? 'paused' : 'on';
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        root.classList.add('js');
+        if (!reduced && motion !== 'paused') root.classList.add('js-motion');
+        var meta = document.querySelector('meta[data-theme-color]');
+        if (meta) meta.setAttribute('content', '#ececec');
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <Font cssVariable="--font-sans" preload />
+    <Font cssVariable="--font-display" preload />
+    <Seo title={title} description={description} type={type} noindex={noindex} published={published} modified={modified} />
+    <JsonLd graph={graph} />
+    <ClientRouter fallback="animate" />
+    {beacon && <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={beacon} />}
+  </head>
+  <body data-page={page}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="progress" transition:persist="progress" aria-hidden="true"></div>
+    <div class="curtain" transition:persist="curtain" aria-hidden="true"></div>
+    <Nav />
+    <main id="main" class="site">
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      import '~/boot';
+    </script>
+  </body>
+</html>

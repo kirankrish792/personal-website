@@ -1,0 +1,38 @@
+---
+/** Not found: served for any missing address (Cloudflare's 404-page handling), never indexed. */
+import { render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import { page } from '~/lib/content';
+
+const notFound = await page('404');
+const d = notFound.data;
+const { Content } = await render(notFound);
+---
+
+<Base title={d.title} description={d.description} noindex page="not-found">
+  <PageHead h1={d.h1} lede={d.intro}>
+    <div class="not-found">
+      <Content />
+    </div>
+  </PageHead>
+</Base>
+
+<style>
+  /* The shortest page on the site: the head fills the screen above the footer instead of leaving it mid-screen. */
+  :global(body[data-page='not-found'] .page-head) {
+    min-height: calc(100svh - 14rem);
+  }
+
+  /* The body reads like a lede: one short paragraph whose links lead back into the site. */
+  .not-found {
+    max-width: 44rem;
+    margin-top: var(--space-5);
+    font-size: var(--step-1);
+    color: var(--fg-soft);
+  }
+
+  .not-found :global(a) {
+    color: var(--fg);
+  }
+</style>

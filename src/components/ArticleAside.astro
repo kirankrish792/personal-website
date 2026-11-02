@@ -1,0 +1,158 @@
+---
+/**
+ * The right-hand column of a case study or post: a sticky panel with the page's sections
+ * ("On this page", the current one marked as you read), a reading-progress meter, and whatever the
+ * page adds in the default slot (facts, author, links). Behaviour: src/motion/article.ts.
+ *
+ *   <ArticleAside headings={headings} target="#cs-body"><Facts /></ArticleAside>
+ *
+ * Hidden below 64rem, where the single column already reads well and the site's top progress line
+ * shows how far along you are.
+ */
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+interface Props {
+  headings: Heading[];
+  /** The article element whose scroll range the progress meter follows. */
+  target: string;
+}
+const { headings, target } = Astro.props;
+const sections = headings.filter((h) => h.depth === 2);
+---
+
+<aside class="aside" aria-label="About this page">
+  <div class="aside__inner">
+    <div class="aside__progress" data-read-progress={target} aria-hidden="true">
+      <span class="label">Read</span>
+      <span class="aside__track"><span class="aside__fill"></span></span>
+      <span class="aside__pct" data-read-pct>0%</span>
+    </div>
+
+    {
+      sections.length > 1 && (
+        <nav class="aside__toc" aria-label="On this page">
+          <p class="label">On this page</p>
+          <ol data-toc>
+            {sections.map((h) => (
+              <li>
+                <a href={`#${h.slug}`} data-toc-link={h.slug}>
+                  {h.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    <slot />
+  </div>
+</aside>
+
+<style>
+  /* Stretch to the article's full height so the sticky panel can travel with the reader. */
+  .aside {
+    position: relative;
+    align-self: stretch;
+  }
+
+  .aside__inner {
+    position: sticky;
+    top: calc(var(--bar) + var(--space-6));
+    display: grid;
+    gap: var(--space-6);
+    max-height: calc(100svh - var(--bar) - var(--space-8));
+    overflow-y: auto;
+    padding-bottom: var(--space-4);
+    scrollbar-width: none;
+  }
+
+  .aside__progress {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .aside__track {
+    height: 2px;
+    background: var(--rule);
+  }
+
+  .aside__fill {
+    display: block;
+    height: 100%;
+    background: var(--coral);
+    transform-origin: left;
+    transform: scaleX(var(--read, 0));
+    transition: transform 0.15s linear;
+  }
+
+  .aside__pct {
+    min-width: 3ch;
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .aside__toc ol {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    border-left: 1px solid var(--rule);
+  }
+
+  .aside__toc a {
+    position: relative;
+    display: block;
+    padding: 0.4rem 0 0.4rem var(--space-4);
+    font-size: var(--step--1);
+    line-height: 1.35;
+    color: var(--fg-soft);
+    text-decoration: none;
+    transition:
+      color 0.3s,
+      transform 0.4s var(--ease-out);
+  }
+
+  .aside__toc a::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--coral);
+    transform: scaleY(0);
+    transition: transform 0.4s var(--ease-out);
+  }
+
+  .aside__toc a:hover {
+    color: var(--fg);
+    transform: translateX(3px);
+  }
+
+  .aside__toc a[aria-current='true'] {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .aside__toc a[aria-current='true']::before {
+    transform: scaleY(1);
+  }
+
+  @media (max-width: 64rem) {
+    .aside {
+      display: none;
+    }
+  }
+
+  @media print {
+    .aside {
+      display: none;
+    }
+  }
+</style>

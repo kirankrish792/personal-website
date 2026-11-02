@@ -1,0 +1,195 @@
+---
+import Logo from '~/components/Logo.astro';
+/**
+ * The readable timeline on /experience: one row per role, chapter or degree, newest first.
+ * Dates sit in a ledger column on the left; the organisation is the row's heading.
+ *
+ *   <Timeline entries={entries} />
+ *
+ * Dates are "YYYY" or "YYYY-MM" strings and print as "Oct 2025 – present" or "2019 – 2023".
+ * An unknown start prints no dates at all (never a guess); a known start without an end prints
+ * "present". The heading comes first in the markup so heading navigation lands on the
+ * organisation; the grid moves the dates into the left column.
+ */
+export interface TimelineEntry {
+  /** Anchor for the row, so other pages can link to /experience#txtudio. */
+  id: string;
+  /** Organisation or institution: the row's heading. */
+  org: string;
+  /** Role, or degree and field. */
+  role?: string;
+  /** Registered name, shown under the role when it differs from the heading. */
+  legalName?: string | null;
+  start?: string | null;
+  end?: string | null;
+  summary?: string;
+  highlights?: string[];
+  /** Links under the row; `context` is read by screen readers after the visible label. */
+  links?: { label: string; href: string; context?: string }[];
+}
+
+interface Props {
+  entries: TimelineEntry[];
+}
+
+const { entries } = Astro.props;
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "2025-10" prints "Oct 2025"; "2019" prints "2019". */
+const when = (value: string) => {
+  const [year, month] = value.split('-');
+  return month ? `${MONTHS[Number(month) - 1]} ${year}` : year;
+};
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+---
+
+<ol class="timeline" role="list">
+  {
+    entries.map((e) => (
+      <li class="timeline__entry" id={e.id} data-reveal>
+        <h3 class="timeline__org">
+          {(e.id === 'txtudio' || e.id === 'lofritex') && <Logo company={e.id} variant="mark" brand class="timeline__logo" />}
+          {e.org}
+        </h3>
+        {e.start && (
+          <p class="timeline__dates">
+            <time datetime={e.start}>{when(e.start)}</time>
+            {' – '}
+            {e.end ? <time datetime={e.end}>{when(e.end)}</time> : 'present'}
+          </p>
+        )}
+        {e.role && <p class="timeline__role">{e.role}</p>}
+        {e.legalName && e.legalName !== e.org && <p class="timeline__legal">{e.legalName}</p>}
+        {e.summary && <p class="timeline__summary">{e.summary}</p>}
+        {e.highlights && e.highlights.length > 0 && (
+          <ul class="timeline__highlights">
+            {e.highlights.map((h) => (
+              <li>{h}</li>
+            ))}
+          </ul>
+        )}
+        {e.links && e.links.length > 0 && (
+          <ul class="timeline__links" role="list">
+            {e.links.map((l) => (
+              <li>
+                <a href={l.href} rel={isExternal(l.href) ? 'noopener' : undefined}>
+                  {l.label}
+                  {l.context && <span class="visually-hidden">{l.context}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .timeline__org :global(.timeline__logo) {
+    margin: -0.12em 0.35em 0 0;
+    font-size: 0.9em;
+  }
+
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .timeline__entry {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--space-5);
+    align-items: baseline;
+    padding-block: var(--space-6) var(--space-7);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .timeline__org,
+  .timeline__role,
+  .timeline__legal,
+  .timeline__summary,
+  .timeline__highlights,
+  .timeline__links {
+    grid-column: 4 / span 7;
+  }
+
+  .timeline__dates {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+    color: var(--fg-faint);
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timeline__org {
+    font-size: var(--step-2);
+    line-height: 1.2;
+  }
+
+  .timeline__role {
+    margin-top: var(--space-2);
+    font-weight: 500;
+  }
+
+  .timeline__legal {
+    font-size: var(--step--1);
+    font-stretch: var(--wdth-ledger);
+    color: var(--fg-faint);
+  }
+
+  .timeline__summary {
+    max-width: 40rem;
+    margin-top: var(--space-4);
+    color: var(--fg-soft);
+  }
+
+  /* Explicit, because browsers give a list nested in another list hollow circles. */
+  .timeline__highlights {
+    max-width: 40rem;
+    margin: var(--space-4) 0 0;
+    padding-left: 1.1em;
+    list-style-type: disc;
+    color: var(--fg-soft);
+  }
+
+  .timeline__highlights li + li {
+    margin-top: var(--space-2);
+  }
+
+  .timeline__highlights li::marker {
+    color: var(--fg-faint);
+  }
+
+  .timeline__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-5);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .timeline__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  @media (max-width: 56rem) {
+    .timeline__org,
+    .timeline__role,
+    .timeline__legal,
+    .timeline__summary,
+    .timeline__highlights,
+    .timeline__links,
+    .timeline__dates {
+      grid-column: 1 / -1;
+    }
+
+    .timeline__dates {
+      margin-bottom: var(--space-2);
+    }
+  }
+</style>

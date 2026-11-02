@@ -1,0 +1,490 @@
+---
+import Base from '~/layouts/Base.astro';
+import person from '~/data/person.json';
+import { page } from '~/lib/content';
+import { breadcrumbNode, webPageNode } from '~/lib/schema';
+import { SITE } from '~/site.config';
+
+const d = (await page('resume')).data;
+
+/** Printed from this page by scripts/resume-pdf.mjs and committed to public/. */
+const RESUME_PDF = '/Kiran-Krishnakumar-Subhashini-Resume.pdf';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "2025-10" prints "Oct 2025"; "2019" prints "2019". */
+const when = (value: string) => {
+  const [year, month] = value.split('-');
+  return month ? `${MONTHS[Number(month) - 1]} ${year}` : year;
+};
+/** "Oct 2025 – present" or "2019 – 2023"; an unknown start prints nothing rather than a guess. */
+const dates = (start?: string | null, end?: string | null) => (start ? `${when(start)} – ${end ? when(end) : 'present'}` : '');
+/** The registered name when it contains the short one, otherwise the unit and its institution. */
+const orgName = (org: string, legal?: string | null) => (!legal ? org : legal.includes(org) ? legal : `${org}, ${legal}`);
+/** "https://www.linkedin.com/in/kiran-ks79ks" prints "linkedin.com/in/kiran-ks79ks". */
+const bare = (href: string) => href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+const degree = (e: { degree: string; field?: string }) => (e.field ? `${e.degree} in ${e.field}` : e.degree);
+
+// The email shows only once it is set in site.config.ts.
+const email: string = SITE.email;
+const links = [
+  { label: bare(person.url), href: person.url },
+  ...SITE.socials.map((s) => ({ label: bare(s.href), href: s.href })),
+  ...(email ? [{ label: email, href: `mailto:${email}` }] : []),
+];
+const place = [person.location.locality, person.location.region, person.location.country].join(', ');
+
+const schema = [
+  {
+    ...webPageNode({ path: '/resume', name: d.title, description: d.description }),
+    ...(d.updated && { dateModified: d.updated.toISOString().slice(0, 10) }),
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: 'Experience', path: '/experience' },
+    { name: 'Résumé', path: '/resume' },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} schema={schema} page="resume">
+  <div class="resume-page">
+    <div class="sheet">
+      <div class="bar" data-print-hide>
+        <h1 class="bar__title">{d.h1}</h1>
+        <a class="btn btn--primary" href={RESUME_PDF} download data-astro-prefetch="false">Download PDF</a>
+      </div>
+
+      <article class="resume" aria-labelledby="resume-name">
+        <header class="resume__head">
+          <p class="resume__name" id="resume-name">{person.name}</p>
+          <p class="resume__title">{person.jobTitle}</p>
+          <p class="resume__place">{place}</p>
+          <ul class="resume__links" role="list">
+            {
+              links.map((l) => (
+                <li>
+                  <a href={l.href}>{l.label}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </header>
+
+        <section class="resume__section" aria-labelledby="resume-summary">
+          <h2 id="resume-summary">Summary</h2>
+          <div class="resume__body">
+            <p>{person.resume.summary}</p>
+          </div>
+        </section>
+
+        <section class="resume__section" aria-labelledby="resume-experience">
+          <h2 id="resume-experience">Experience</h2>
+          <div class="resume__body">
+            {
+              person.experience.map((e) => (
+                <div class="resume__entry">
+                  <div class="resume__line">
+                    <h3>{orgName(e.org, e.legalName)}</h3>
+                    {e.start && <p class="resume__dates">{dates(e.start, e.end)}</p>}
+                  </div>
+                  <p class="resume__role">{e.role}</p>
+                  <p class="resume__text">{e.summary}</p>
+                  {e.highlights.length > 0 && (
+                    <ul class="resume__list">
+                      {e.highlights.map((h) => (
+                        <li>{h}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        {
+          person.leadership.length > 0 && (
+            <section class="resume__section" aria-labelledby="resume-leadership">
+              <h2 id="resume-leadership">Leadership</h2>
+              <div class="resume__body">
+                {person.leadership.map((l) => (
+                  <div class="resume__entry">
+                    <div class="resume__line">
+                      <h3>{l.org}</h3>
+                      {l.start && <p class="resume__dates">{dates(l.start, l.end)}</p>}
+                    </div>
+                    <p class="resume__role">{l.role}</p>
+                    <p class="resume__text">{l.summary}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )
+        }
+
+        <section class="resume__section" aria-labelledby="resume-projects">
+          <h2 id="resume-projects">Selected projects</h2>
+          <div class="resume__body">
+            {
+              person.resume.projects.map((p) => (
+                <div class="resume__entry">
+                  <div class="resume__line">
+                    <h3>
+                      <a href={p.href}>{p.name}</a>
+                    </h3>
+                    <p class="resume__dates">{p.year}</p>
+                  </div>
+                  <p class="resume__text">{p.line}</p>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="resume__section" aria-labelledby="resume-skills">
+          <h2 id="resume-skills">Skills</h2>
+          <dl class="resume__body">
+            {
+              person.skills.map((s) => (
+                <div class="resume__skill">
+                  <dt>{s.group}</dt>
+                  <dd>{s.items.join(', ')}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+
+        <section class="resume__section" aria-labelledby="resume-education">
+          <h2 id="resume-education">Education</h2>
+          <div class="resume__body">
+            {
+              person.education.map((e) => (
+                <div class="resume__entry">
+                  <div class="resume__line">
+                    <h3>{e.institution}</h3>
+                    {e.start && <p class="resume__dates">{dates(e.start, e.end)}</p>}
+                  </div>
+                  <p class="resume__role">{degree(e)}</p>
+                </div>
+              ))
+            }
+          </div>
+        </section>
+
+        {
+          person.certifications.length > 0 && (
+            <section class="resume__section" aria-labelledby="resume-certifications">
+              <h2 id="resume-certifications">Certifications</h2>
+              <ul class="resume__body resume__certs" role="list">
+                {person.certifications.map((c) => (
+                  <li class="resume__line">
+                    <span>
+                      <span class="resume__cert">{c.name}</span>
+                      {c.issuer && <span class="resume__issuer">{`, ${c.issuer}`}</span>}
+                    </span>
+                    {c.date && <span class="resume__dates">{when(c.date)}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+      </article>
+    </div>
+  </div>
+</Base>
+
+<style>
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+
+  .resume-page {
+    padding-block: calc(var(--nav-h) + var(--space-8)) var(--space-9);
+  }
+
+  /* A centred column about as wide as an A4 sheet; the text inside stays left-aligned. */
+  .sheet {
+    width: min(100% - 2 * var(--gutter), 52rem);
+    margin-inline: auto;
+  }
+
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-bottom: var(--space-5);
+    margin-bottom: var(--space-7);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .bar__title {
+    font-size: var(--step-3);
+  }
+
+  /* Sizes inside the document are in em, so the print styles set one base size for all of it. */
+  .resume {
+    font-size: var(--step-0);
+    line-height: 1.5;
+  }
+
+  .resume__head {
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .resume__name {
+    margin-bottom: var(--space-4);
+    font-size: clamp(var(--step-3), 5.5vw, var(--step-5));
+    font-weight: 500;
+    font-stretch: var(--wdth-name);
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+  }
+
+  .resume__title {
+    font-size: 1.25em;
+    line-height: 1.35;
+  }
+
+  .resume__place {
+    color: var(--fg-soft);
+  }
+
+  .resume__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-5);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+    font-stretch: var(--wdth-ledger);
+  }
+
+  .resume__links a,
+  .resume__line h3 a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .resume__section {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--space-5);
+    align-items: baseline;
+    padding-block: var(--space-5);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .resume__section:last-child {
+    border-bottom: 0;
+  }
+
+  .resume__section > h2 {
+    grid-column: 1 / span 3;
+    font-size: 1em;
+    line-height: 1.5;
+    color: var(--fg-soft);
+  }
+
+  .resume__body {
+    grid-column: 4 / -1;
+    margin: 0;
+    padding: 0;
+  }
+
+  .resume__entry + .resume__entry {
+    margin-top: var(--space-5);
+  }
+
+  .resume__line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0 var(--space-4);
+  }
+
+  .resume__line h3 {
+    font-size: 1em;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .resume__dates {
+    color: var(--fg-faint);
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .resume__text {
+    margin-top: var(--space-2);
+    color: var(--fg-soft);
+  }
+
+  .resume__list {
+    margin: var(--space-2) 0 0;
+    padding-left: 1.1em;
+    color: var(--fg-soft);
+  }
+
+  .resume__list li + li {
+    margin-top: var(--space-1);
+  }
+
+  .resume__list li::marker {
+    color: var(--fg-faint);
+  }
+
+  .resume__skill {
+    display: grid;
+    grid-template-columns: 10rem minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .resume__skill + .resume__skill {
+    margin-top: var(--space-2);
+  }
+
+  .resume__skill dt,
+  .resume__cert {
+    font-weight: 500;
+  }
+
+  .resume__skill dd {
+    margin: 0;
+  }
+
+  .resume__skill dd,
+  .resume__issuer {
+    color: var(--fg-soft);
+  }
+
+  .resume__certs {
+    list-style: none;
+  }
+
+  .resume__certs li + li {
+    margin-top: var(--space-2);
+  }
+
+  /* Layout queries are screen-only: an A4 page is narrower than 56rem and would match them. */
+  @media screen and (max-width: 56rem) {
+    .resume__section > h2,
+    .resume__body {
+      grid-column: 1 / -1;
+    }
+
+    .resume__section > h2 {
+      margin-bottom: var(--space-3);
+    }
+  }
+
+  @media screen and (max-width: 40rem) {
+    .resume__skill {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+  }
+
+  @media print {
+    .resume-page {
+      padding: 0;
+    }
+
+    .sheet {
+      width: auto;
+      margin: 0;
+    }
+
+    /* Paper tokens: ink on white, whatever theme the screen is in. */
+    .resume {
+      --fg: black;
+      --fg-soft: color-mix(in srgb, black 80%, white);
+      --fg-faint: color-mix(in srgb, black 60%, white);
+      --rule: color-mix(in srgb, black 18%, white);
+      --rule-strong: color-mix(in srgb, black 55%, white);
+      color: var(--fg);
+      font-size: 10pt;
+      line-height: 1.36;
+    }
+
+    .resume__head {
+      padding-bottom: 3.5mm;
+    }
+
+    .resume__name {
+      margin-bottom: 1.5mm;
+      font-size: 22pt;
+    }
+
+    .resume__title {
+      font-size: 1.1em;
+    }
+
+    .resume__links {
+      gap: 0 6mm;
+      margin-top: 1mm;
+    }
+
+    .resume__links a,
+    .resume__line h3 a {
+      min-height: 0;
+    }
+
+    /* On paper each heading sits above its section, so the text gets the full width. */
+    .resume__section {
+      display: block;
+      padding-block: 3.5mm;
+    }
+
+    .resume__section > h2 {
+      margin-bottom: 1.5mm;
+      font-size: 1.05em;
+      font-weight: 600;
+      color: var(--fg);
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .resume__entry,
+    .resume__skill,
+    .resume__certs li {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .resume__entry + .resume__entry {
+      margin-top: 3mm;
+    }
+
+    .resume__text,
+    .resume__list {
+      margin-top: 1mm;
+    }
+
+    .resume__list li + li {
+      margin-top: 0.5mm;
+    }
+
+    .resume__skill {
+      grid-template-columns: 34mm minmax(0, 1fr);
+      gap: 3mm;
+    }
+
+    .resume__skill + .resume__skill,
+    .resume__certs li + li {
+      margin-top: 1mm;
+    }
+
+    .resume__dates {
+      font-size: 0.92em;
+    }
+  }
+</style>

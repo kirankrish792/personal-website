@@ -1,0 +1,26 @@
+// The Home hero: mid-intro, settled, with the cursor over the name, part-scrolled, and on a phone.
+import { chromium } from '@playwright/test';
+const base = process.argv[2] ?? 'http://127.0.0.1:4321';
+const browser = await chromium.launch();
+const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+page.on('pageerror', (e) => errors.push(e.message));
+page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+await page.goto(`${base}/`);
+await page.waitForTimeout(900);
+await page.screenshot({ path: 'test-results/shots/hero-intro.png' });
+await page.waitForTimeout(3000);
+await page.screenshot({ path: 'test-results/shots/hero-settled.png' });
+const line = await page.locator('[data-hero-line="1"]').boundingBox();
+await page.mouse.move(line.x + line.width * 0.45, line.y + line.height * 0.5, { steps: 12 });
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'test-results/shots/hero-pointer.png' });
+await page.mouse.wheel(0, 380);
+await page.waitForTimeout(1200);
+await page.screenshot({ path: 'test-results/shots/hero-scrolled.png' });
+const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+await phone.goto(`${base}/`);
+await phone.waitForTimeout(3500);
+await phone.screenshot({ path: 'test-results/shots/hero-phone.png' });
+console.log(errors.join('\n') || 'no errors');
+await browser.close();

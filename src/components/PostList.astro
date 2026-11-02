@@ -1,0 +1,166 @@
+---
+/**
+ * Writing in ledger rows: the date and a short note (reading time, or where it was published)
+ * on the left, the title and summary on the right. The whole row is the link's target, while the
+ * link's name stays the title. Used for posts and for writing published elsewhere.
+ *
+ *   <PostList rows={rows} />              titles as h2
+ *   <PostList rows={rows} level="h3" />   under a section heading
+ */
+import { formatDate } from '~/lib/content';
+
+export interface PostRow {
+  title: string;
+  href: string;
+  date: Date;
+  summary: string;
+  /** Short note under the date, for example "6 min read" or "Published by Lofritex". */
+  note?: string;
+  /** A link to another site. */
+  external?: boolean;
+}
+
+interface Props {
+  rows: PostRow[];
+  level?: 'h2' | 'h3';
+}
+
+const { rows, level = 'h2' } = Astro.props;
+const Heading = level;
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+---
+
+{
+  rows.length > 0 && (
+    <ol class:list={['posts', `posts--${level}`]} role="list">
+      {rows.map((row) => (
+        <li class="posts__row">
+          <Heading class="posts__title">
+            <a href={row.href} rel={row.external ? 'noopener' : undefined}>
+              {row.title}
+            </a>
+          </Heading>
+          <p class="posts__summary">{row.summary}</p>
+          <time class="posts__date" datetime={isoDate(row.date)}>
+            {formatDate(row.date)}
+          </time>
+          {row.note && <span class="posts__note">{row.note}</span>}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+<style>
+  .posts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Source order is title, summary, date, note (so headings lead for screen readers);
+     the grid puts the date and note in the left column, as in a register. */
+  .posts__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 44rem);
+    column-gap: var(--space-5);
+    row-gap: var(--space-2);
+    align-items: baseline;
+    padding-block: var(--space-6);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .posts__title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: var(--step-2);
+    line-height: 1.2;
+  }
+
+  .posts--h3 .posts__title {
+    font-size: var(--step-1);
+  }
+
+  .posts__title a {
+    text-decoration: none;
+  }
+
+  /* Stretch the title link over the whole row. */
+  .posts__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .posts__row:hover .posts__title a,
+  .posts__title a:focus-visible {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.2em;
+  }
+
+  .posts__title a:focus-visible {
+    outline: none;
+  }
+
+  .posts__title a:focus-visible::after {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .posts__summary {
+    grid-column: 2;
+    grid-row: 2;
+    color: var(--fg-soft);
+  }
+
+  .posts__date,
+  .posts__note {
+    grid-column: 1;
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .posts__date {
+    grid-row: 1;
+    color: var(--fg-soft);
+  }
+
+  .posts__note {
+    grid-row: 2;
+    color: var(--fg-faint);
+  }
+
+  @media (max-width: 56rem) {
+    .posts__row {
+      grid-template-columns: auto minmax(0, 1fr);
+      column-gap: var(--space-5);
+      padding-block: var(--space-5);
+    }
+
+    .posts__title,
+    .posts__summary {
+      grid-column: 1 / -1;
+    }
+
+    .posts__title {
+      font-size: var(--step-1);
+    }
+
+    .posts--h3 .posts__title {
+      font-size: 1.125rem;
+    }
+
+    .posts__date,
+    .posts__note {
+      grid-row: 3;
+      margin-top: var(--space-1);
+    }
+
+    .posts__note {
+      grid-column: 2;
+    }
+  }
+</style>

@@ -1,0 +1,68 @@
+---
+/** A compact facts list in ledger typography: Year, Role, Stack, Links and so on. */
+interface Item {
+  label: string;
+  value?: string | string[];
+  links?: { label: string; href: string }[];
+}
+interface Props {
+  items: Item[];
+  label?: string;
+}
+const { items, label = 'Facts' } = Astro.props;
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+---
+
+<dl class="meta" aria-label={label}>
+  {
+    items
+      .filter((i) => (Array.isArray(i.value) ? i.value.length : i.value) || i.links?.length)
+      .map((i) => (
+        <div class="meta__row">
+          <dt>{i.label}</dt>
+          <dd>
+            {Array.isArray(i.value) ? i.value.join(', ') : i.value}
+            {i.links?.map((l, n) => (
+              <>
+                {n > 0 || i.value ? ' ' : ''}
+                <a href={l.href} rel={isExternal(l.href) ? 'noopener' : undefined}>
+                  {l.label}
+                </a>
+              </>
+            ))}
+          </dd>
+        </div>
+      ))
+  }
+</dl>
+
+<style>
+  .meta {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    font-stretch: var(--wdth-ledger);
+    font-variant-numeric: tabular-nums;
+    border-top: 1px solid var(--rule);
+  }
+
+  .meta__row {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  dt {
+    color: var(--fg-faint);
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  dd a + a {
+    margin-left: var(--space-3);
+  }
+</style>

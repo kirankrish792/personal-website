@@ -1,0 +1,249 @@
+---
+/**
+ * Contact: what Kiran is open to, then how to reach him. The email and booking buttons render only
+ * when SITE.email and SITE.bookingUrl are set; in development a disabled placeholder marks each gap,
+ * so it is visible while building and never ships.
+ */
+import Base from '~/layouts/Base.astro';
+import PageHead from '~/components/PageHead.astro';
+import Meta from '~/components/Meta.astro';
+import { page } from '~/lib/content';
+import { breadcrumbNode, webPageNode } from '~/lib/schema';
+import { NAV, SITE } from '~/site.config';
+
+const contact = await page('contact');
+const d = contact.data;
+const offers = d.offers ?? [];
+
+const email: string = SITE.email;
+const booking: string = SITE.bookingUrl;
+const dev = import.meta.env.DEV;
+const hasActions = Boolean(email || booking || dev);
+
+/* The sea horizon stays below the head at full strength, then dims once text scrolls over it. */
+
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+/** "https://www.linkedin.com/in/kiran-ks79ks" -> "linkedin.com/in/kiran-ks79ks" */
+const handle = (href: string) => href.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+
+const schema = [
+  {
+    ...webPageNode({ path: '/contact', name: d.title, description: d.description, type: 'ContactPage' }),
+    ...(d.updated && { dateModified: d.updated.toISOString().slice(0, 10) }),
+  },
+  breadcrumbNode([
+    { name: 'Home', path: '/' },
+    { name: NAV.find((n) => n.href === '/contact')?.label ?? d.h1, path: '/contact' },
+  ]),
+];
+---
+
+<Base title={d.title} description={d.description} schema={schema} page="contact">
+  <PageHead h1={d.h1} lede={d.intro} />
+
+  <div class="section">
+    <div class="container">
+      {
+        offers.length > 0 && (
+          <ul class="offers" data-reveal>
+            {offers.map((offer) => (
+              <li class="offer" id={offer.id}>
+                <h2 class="offer__title">{offer.title}</h2>
+                <p class="offer__body">{offer.body}</p>
+                {offer.links && offer.links.length > 0 && (
+                  <ul class="offer__links">
+                    {offer.links.map((link) => (
+                      <li>
+                        <a href={link.href} rel={isExternal(link.href) ? 'noopener' : undefined}>
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <div class="reach" data-reveal>
+        {
+          hasActions && (
+            <div class="reach__actions">
+              {email ? (
+                <a class="btn btn--primary" href={`mailto:${email}`}>
+                  {d.emailLabel ?? 'Email me'}
+                </a>
+              ) : (
+                dev && (
+                  <a class="btn" role="link" aria-disabled="true">
+                    Email not set yet
+                  </a>
+                )
+              )}
+              {booking ? (
+                <a class:list={['btn', { 'btn--primary': !email }]} href={booking}>
+                  {d.bookingLabel ?? 'Book a call'}
+                </a>
+              ) : (
+                dev && (
+                  <a class="btn" role="link" aria-disabled="true">
+                    Booking link not set yet
+                  </a>
+                )
+              )}
+            </div>
+          )
+        }
+
+        <Meta
+          label="Location and time zone"
+          items={[
+            { label: 'Location', value: d.location },
+            { label: 'Time zone', value: d.timezone },
+          ]}
+        />
+
+        <section class="profiles" aria-labelledby="profiles">
+          <h2 id="profiles">{d.profilesHeading ?? 'Profiles'}</h2>
+          <ul class="profiles__list">
+            {
+              SITE.socials.map((s) => (
+                <li>
+                  <a class="profiles__link" href={s.href} rel="me noopener">
+                    <span class="profiles__name">{s.label}</span>{' '}
+                    <span class="profiles__handle">{handle(s.href)}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  /* ---------- Offers: a register of four reasons to write ---------- */
+  .offers {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule-strong);
+  }
+
+  .offer {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--space-5);
+    row-gap: var(--space-3);
+    align-items: start;
+    padding-block: var(--space-6);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .offer__title {
+    grid-column: 1 / span 4;
+    font-size: var(--step-1);
+    line-height: 1.3;
+  }
+
+  .offer__body {
+    grid-column: 5 / span 5;
+    color: var(--fg-soft);
+  }
+
+  .offer__links {
+    grid-column: 10 / span 3;
+    display: grid;
+    justify-items: start;
+    list-style: none;
+    margin: calc((1.55em - 2.75rem) / 2) 0 0;
+    padding: 0;
+  }
+
+  .offer__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  /* ---------- Reach: buttons, where and when, then profiles ---------- */
+  .reach {
+    display: grid;
+    gap: var(--space-7);
+    max-width: 40rem;
+  }
+
+  .offers + .reach {
+    margin-top: var(--space-9);
+  }
+
+  .reach__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .profiles h2 {
+    font-size: var(--step-2);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .profiles__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .profiles__list li {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .profiles__link {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: center;
+    min-height: 2.75rem;
+    padding-block: var(--space-3);
+    text-decoration: none;
+    font-stretch: var(--wdth-ledger);
+  }
+
+  .profiles__name {
+    font-weight: 500;
+  }
+
+  .profiles__handle {
+    color: var(--fg-soft);
+    overflow-wrap: anywhere;
+  }
+
+  .profiles__link:hover .profiles__name,
+  .profiles__link:focus-visible .profiles__name {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.25em;
+  }
+
+  /* ---------- One column below 56rem ---------- */
+  @media (max-width: 56rem) {
+    .offer__title,
+    .offer__body,
+    .offer__links {
+      grid-column: 1 / -1;
+    }
+
+    .offer__links {
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: var(--space-5);
+      margin-top: 0;
+    }
+  }
+</style>
